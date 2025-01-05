@@ -8,13 +8,15 @@ This also uses the great product [Browser Use](https://browseruse.com/) to brows
 
 Follow along as I post about program on my [websites](https://apsquared.co) and my Bluesky account [@apsquared](https://bsky.app/profile/apsquared.bsky.social).
 
+Disclaimer: I'm not an expert at Python or LangGraph, just a developer trying to play with AI Agents and hoping to help others.
+
 ## Motivation
 
 I wanted to create a simple AI agent that uses LangGraph and Browser Use and can be easily deployed. 
 
 ## Client
 
-Part of what I wanted to do is to demonstrate a totally disconnected client that can be used to interact with the agent.  
+Part of what I wanted to do is to demonstrate a totally disconnected client that can be used to interact with the agent.  The client project [can be found here](https://github.com/apsquared/lg-agent-client).
 
 ## Settings
 
