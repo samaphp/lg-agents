@@ -12,6 +12,10 @@ Follow along as I post about program on my [websites](https://apsquared.co) and 
 
 I wanted to create a simple AI agent that uses LangGraph and Browser Use and can be easily deployed. 
 
+## Client
+
+Part of what I wanted to do is to demonstrate a totally disconnected client that can be used to interact with the agent.  
+
 ## Settings
 
 Updates settings .in .env and settings.py file (in core)
