@@ -1,0 +1,8 @@
+{
+    "python_version": "3.12",
+    "dependencies": ["."],
+    "graphs": {
+        "marketing_agent": "./src/agents/marketing_agent/marketing_agent.py:marketing_agent"
+    },
+    "env": "./.env"
+}
