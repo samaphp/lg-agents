@@ -8,6 +8,9 @@ from langgraph.graph.state import CompiledStateGraph
 from langgraph.checkpoint.memory import MemorySaver
 from pydantic import BaseModel
 
+from agents.tools.searchweb import search_web_with_query
+from agents.tools.wikisearch import search_wikipedia_with_query
+
 class PersonaList(BaseModel):
     personas: List[Persona]
 
@@ -45,6 +48,11 @@ def create_marketing_graph() -> CompiledStateGraph:
         state["personas"] = response.personas[:state['max_personas']]
         print("ANALYSTS", state["personas"])
         return state
+    
+    async def search_web_for_competitors(state: workflow_state):
+        results = search_wikipedia_with_query(f"Websites that are alternatives for {state['appName']}")
+        print("SEARCH RESULTS", results)
+        return {"search_results": results["docresults"]}
 
     # Research competitors node using Browser Use
     async def research_competitors(state: workflow_state) -> workflow_state:
@@ -117,12 +125,14 @@ def create_marketing_graph() -> CompiledStateGraph:
 
     # Add nodes
     workflow.add_node("create_personas", create_personas)
+    workflow.add_node("search_web_for_competitors", search_web_for_competitors)
     workflow.add_node("research_competitors", research_competitors)
     workflow.add_node("get_feedback", get_feedback)
     workflow.add_node("__END__", end)
 
     # Create edges
-    workflow.add_edge("create_personas", "research_competitors")
+    workflow.add_edge("create_personas", "search_web_for_competitors")
+    workflow.add_edge("search_web_for_competitors", "research_competitors")
     workflow.add_edge("research_competitors", "get_feedback")
     workflow.add_edge("get_feedback", "__END__")
     

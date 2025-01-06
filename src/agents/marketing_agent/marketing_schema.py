@@ -1,6 +1,8 @@
 from typing import List
 from typing_extensions import TypedDict
 from pydantic import BaseModel, Field
+import operator
+from typing import  Annotated
 
 class Persona(BaseModel):
     name: str = Field(
@@ -32,3 +34,4 @@ class MarketingPlanState(TypedDict):
     human_feedback: str # Human feedback
     personas: List[Persona] # Analyst asking questions
     competitors: List[Competitor] # Competitors
+    search_results: Annotated[list, operator.add] # Source docs
