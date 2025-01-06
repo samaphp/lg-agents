@@ -16,7 +16,7 @@ agent = all_agents[DEFAULT_AGENT]
 async def main() -> None:
     #inputs = {"messages": [("user", "Create a marketing plan for a new app called SkyAssistant a engagement tool for BlueSky")]}
     initial_state: MarketingPlanState = {
-        "appName": "Saas Fights a SaaS battle for the best SaaS tools",
+        "appUrl": "https://www.productfights.com",
         "max_personas": 1,
     }
     result = await agent.graph.ainvoke(

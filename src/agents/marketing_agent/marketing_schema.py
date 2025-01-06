@@ -4,6 +4,8 @@ from pydantic import BaseModel, Field
 import operator
 from typing import  Annotated
 
+from agents.tools.searchweb import SearchResult
+
 class Persona(BaseModel):
     name: str = Field(
         description="Name of the persona"
@@ -30,8 +32,12 @@ class Competitor(BaseModel):
 
 class MarketingPlanState(TypedDict):
     appName: str # App Name
+    appUrl: str | None # App URL
+    appDescription: str # App Description
+    keyfeatures: List[str] # Key features
+    value_proposition: str # Value proposition
     max_personas: int # Number of analysts
     human_feedback: str # Human feedback
     personas: List[Persona] # Analyst asking questions
     competitors: List[Competitor] # Competitors
-    search_results: Annotated[list, operator.add] # Source docs
+    search_results: Annotated[List[SearchResult], operator.add] # Search results
