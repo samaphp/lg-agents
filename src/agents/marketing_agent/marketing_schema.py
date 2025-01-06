@@ -28,7 +28,11 @@ class Competitor(BaseModel):
         description="URL of the competitor",
     )
 
-
+class MarketingInput(TypedDict):
+    appName: str # App Name
+    appUrl: str  # App URL
+    max_personas: int = 2 # Number of analysts
+    competitor_hint: str | None # Competitor hint
 
 class MarketingPlanState(TypedDict):
     appName: str # App Name

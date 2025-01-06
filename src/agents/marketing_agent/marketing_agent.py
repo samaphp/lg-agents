@@ -3,7 +3,7 @@ from typing_extensions import TypedDict
 from langgraph.graph import Graph, StateGraph
 from agents.llmtools import get_llm
 from browser_use import ActionResult, Agent, Browser, BrowserConfig, Controller
-from agents.marketing_agent.marketing_schema import Competitor, MarketingPlanState, Persona
+from agents.marketing_agent.marketing_schema import Competitor, MarketingInput, MarketingPlanState, Persona
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.checkpoint.memory import MemorySaver
 from pydantic import BaseModel, Field
@@ -187,7 +187,7 @@ def create_marketing_graph() -> CompiledStateGraph:
         return state
 
     # Create the graph
-    workflow = StateGraph(MarketingPlanState)
+    workflow = StateGraph(MarketingPlanState,input=MarketingInput)
 
     # Add nodes
     workflow.add_node("analyze_site", analyze_site)
