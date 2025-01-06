@@ -33,6 +33,7 @@ class Competitor(BaseModel):
 class MarketingPlanState(TypedDict):
     appName: str # App Name
     appUrl: str | None # App URL
+    competitor_hint: str | None # Competitor hint
     appDescription: str # App Description
     keyfeatures: List[str] # Key features
     value_proposition: str # Value proposition
@@ -40,4 +41,6 @@ class MarketingPlanState(TypedDict):
     human_feedback: str # Human feedback
     personas: List[Persona] # Analyst asking questions
     competitors: List[Competitor] # Competitors
+    keywords: Annotated[List[str], operator.add] # Keywords
+    tagline: str # Tagline
     search_results: Annotated[List[SearchResult], operator.add] # Search results

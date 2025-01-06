@@ -6,7 +6,7 @@ from browser_use import ActionResult, Agent, Browser, BrowserConfig, Controller
 from agents.marketing_agent.marketing_schema import Competitor, MarketingPlanState, Persona
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.checkpoint.memory import MemorySaver
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from agents.tools.searchweb import search_web, search_web_with_query
 from agents.tools.wikisearch import search_wikipedia_with_query
@@ -23,6 +23,9 @@ class SiteInfo(BaseModel):
     keyfeatures: List[str]
     value_proposition: str
 
+
+class KeywordList(BaseModel):
+    keywords: List[str]
 
 def create_marketing_graph() -> CompiledStateGraph:
     
@@ -55,6 +58,14 @@ def create_marketing_graph() -> CompiledStateGraph:
         results = search_web(f"Find website with a similar value proposition: {state['value_proposition']}")
         #print("SEARCH RESULTS", results)
         return {"search_results": results}
+    
+    async def search_web_for_competitors_by_hint(state: workflow_state):
+        if state['competitor_hint']:
+            results = search_web_with_query(f"Find website similar to {state['competitor_hint']}")
+            #print("SEARCH RESULTS", results)
+            return {"search_results": results}
+        else:
+            return state
 
     # Research competitors node using Browser Use
     async def analyze_site(state: workflow_state) -> workflow_state:
@@ -98,6 +109,20 @@ def create_marketing_graph() -> CompiledStateGraph:
             state["appName"] = parsed.appName
         return state
 
+    async def extract_keywords(state: workflow_state) -> workflow_state:
+        prompt = f"""
+        Thinking like a social media manager what are some keywords you would monitor for {state['appName']} whose value proposition is: {state['value_proposition']}
+
+        The personas are: {state['personas']}
+        
+        Return a list of 5-10 keywords or phrases to search for to find posts to monitor and respond to.
+        """
+        llm = get_llm()
+        structured_llm = llm.with_structured_output(KeywordList)
+        response = structured_llm.invoke(prompt)
+        state["keywords"] = response.keywords
+        return state
+    
     # Get human feedback node
     def get_feedback(state: workflow_state) -> workflow_state:
         # Here you could implement actual user interaction
@@ -111,23 +136,75 @@ def create_marketing_graph() -> CompiledStateGraph:
         print("Marketing analysis completed:", state)
         return state
 
+    async def finalize_competitors(state: workflow_state) -> workflow_state:
+        """
+        Analyze search results to create a final list of competitors.
+        Uses browser to visit each site and extract relevant information.
+        """
+        llm = get_llm()
+        controller = Controller()
+        results = []
+
+        @controller.registry.action('Done with task', param_model=CompetitorList)
+        async def done(params: CompetitorList):
+            print(f"[CONTROLLER] Done with task: {params.model_dump_json()}")
+            result = ActionResult(is_done=True, extracted_content=params.model_dump_json())
+            return result
+
+        # Process each search result
+        for search_result in state.get('search_results', []):
+            try:
+                browser_agent = Agent(
+                    task=f"""Visit website {search_result.link} and look for a list of competitors to {state['appName']} or {state['competitor_hint']}.  
+                    Do not visit {state['appUrl']} or {state['competitor_hint']}.
+                    
+                    Extract competitors to {state['appName']} or {state['competitor_hint']}:
+                    - Name of the company/product
+                    - Brief Description of what they do
+                    - URL of the website
+                    
+                    """,
+                    llm=llm,
+                    browser=Browser(
+                        config=BrowserConfig(
+                            headless=True,
+                            proxy=None,
+                        )
+                    ),
+                    controller=controller
+                )
+                
+                result = await browser_agent.run(max_steps=15)
+                if result and result.final_result():
+                    competitors = CompetitorList.model_validate_json(result.final_result())
+                    results.append(competitors)
+            except Exception as e:
+                print(f"Error analyzing competitor {search_result.link}: {e}")
+                continue
+
+        # Update state with competitors
+        state["competitors"] = results
+        return state
+
     # Create the graph
     workflow = StateGraph(MarketingPlanState)
 
     # Add nodes
     workflow.add_node("analyze_site", analyze_site)
     workflow.add_node("create_personas", create_personas)
+    workflow.add_node("extract_keywords", extract_keywords)
     workflow.add_node("search_web_for_competitors", search_web_for_competitors)
+    workflow.add_node("search_web_for_competitors_by_hint", search_web_for_competitors_by_hint)
     workflow.add_node("get_feedback", get_feedback)
     workflow.add_node("__END__", end)
+    workflow.add_node("finalize_competitors", finalize_competitors)
 
     # Create edges
     workflow.add_edge("analyze_site", "create_personas")
-    workflow.add_edge("create_personas", "search_web_for_competitors")
-    workflow.add_edge("search_web_for_competitors", "__END__")
-    #workflow.add_edge("search_web_for_competitors", "research_competitors")
-    #workflow.add_edge("research_competitors", "get_feedback")
-    #workflow.add_edge("get_feedback", "__END__")
+    workflow.add_edge("create_personas", "extract_keywords")
+    workflow.add_edge("extract_keywords", "search_web_for_competitors_by_hint")
+    workflow.add_edge("search_web_for_competitors_by_hint", "finalize_competitors")
+    workflow.add_edge("finalize_competitors", "__END__")
     
     # Set entry point
     workflow.set_entry_point("analyze_site")
