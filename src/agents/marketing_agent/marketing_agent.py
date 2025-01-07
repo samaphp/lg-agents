@@ -1,3 +1,5 @@
+import subprocess
+import sys
 from typing import Annotated, Sequence, TypeVar, List
 from typing_extensions import TypedDict
 from langgraph.graph import Graph, StateGraph
@@ -31,6 +33,15 @@ def create_marketing_graph() -> CompiledStateGraph:
     
     # Define state type
     workflow_state = TypeVar("workflow_state", bound=MarketingPlanState)
+
+    # Needed for Langgraph studio to work
+    # try:
+    #     subprocess.run([sys.executable, "-m", "playwright", "install-deps"], check=True)
+    #     subprocess.run([sys.executable, "-m", "playwright", "install"], check=True) 
+    #     print("Playwright browsers installed successfully!")
+    # except subprocess.CalledProcessError as e:
+    #     print(f"Error installing Playwright browsers: {e}", file=sys.stderr)
+    #     sys.exit(1)
 
     # Create personas node
     def create_personas(state: workflow_state) -> workflow_state:
