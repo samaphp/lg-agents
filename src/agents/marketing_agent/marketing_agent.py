@@ -10,7 +10,7 @@ from langgraph.graph.state import CompiledStateGraph
 from langgraph.checkpoint.memory import MemorySaver
 from pydantic import BaseModel, Field
 
-from agents.tools.searchweb import search_web, search_web_with_query
+from agents.tools.searchweb import scrape_web, search_web, search_web_with_query
 from agents.tools.wikisearch import search_wikipedia_with_query
 
 class PersonaList(BaseModel):
@@ -153,44 +153,24 @@ def create_marketing_graph() -> CompiledStateGraph:
         Uses browser to visit each site and extract relevant information.
         """
         llm = get_llm()
-        controller = Controller()
+
         results = []
-
-        @controller.registry.action('Done with task', param_model=CompetitorList)
-        async def done(params: CompetitorList):
-            print(f"[CONTROLLER] Done with task: {params.model_dump_json()}")
-            result = ActionResult(is_done=True, extracted_content=params.model_dump_json())
-            return result
-
-        # Process each search result
-        for search_result in state.get('search_results', []):
+        for search_result in state["search_results"]:
             try:
-                browser_agent = Agent(
-                    task=f"""Visit website {search_result.link} and look for a list of competitors to {state['appName']} or {state['competitor_hint']}.  
-                    Do not visit {state['appUrl']} or {state['competitor_hint']}.
-                    
-                    Extract competitors to {state['appName']} or {state['competitor_hint']}:
-                    - Name of the company/product
-                    - Brief Description of what they do
-                    - URL of the website
-                    
-                    """,
-                    llm=llm,
-                    browser=Browser(
-                        config=BrowserConfig(
-                            headless=True,
-                            proxy=None,
-                        )
-                    ),
-                    controller=controller
-                )
+                doc = scrape_web(search_result.link)
+                prompt = f"""Extract the following information from this web page content:
+                - All links to top level domains that appear to be competitors to Product Hunt
+                - For each competitor also map their name and a brief description if available.
                 
-                result = await browser_agent.run(max_steps=15)
-                if result and result.final_result():
-                    competitors = CompetitorList.model_validate_json(result.final_result())
-                    results.append(competitors)
+                Content:
+                {doc.page_content}
+                """
+                
+                structured_llm = llm.with_structured_output(CompetitorList)
+                competitors = structured_llm.invoke(prompt)
+                results.extend(competitors.competitors)
             except Exception as e:
-                print(f"Error analyzing competitor {search_result.link}: {e}")
+                print(f"Error processing {search_result.link}: {str(e)}")
                 continue
 
         # Update state with competitors
