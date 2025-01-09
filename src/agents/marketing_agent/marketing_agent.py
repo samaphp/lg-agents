@@ -4,13 +4,12 @@ from typing import Annotated, Sequence, TypeVar, List
 from typing_extensions import TypedDict
 from langgraph.graph import Graph, StateGraph
 from agents.llmtools import get_llm
-from browser_use import ActionResult, Agent, Browser, BrowserConfig, Controller
 from agents.marketing_agent.marketing_schema import Competitor, MarketingInput, MarketingPlanState, Persona
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.checkpoint.memory import MemorySaver
 from pydantic import BaseModel, Field
 
-from agents.tools.searchweb import scrape_web, search_web, search_web_with_query
+from agents.tools.searchweb import scrape_web, search_web, search_web_with_query, use_browser
 from agents.tools.wikisearch import search_wikipedia_with_query
 
 class PersonaList(BaseModel):
@@ -82,36 +81,15 @@ def create_marketing_graph() -> CompiledStateGraph:
     async def analyze_site(state: workflow_state) -> workflow_state:
         results = []
 
-        llm = get_llm()
-        controller = Controller()
-
-        @controller.registry.action('Done with task', param_model=SiteInfo)
-        async def done(params: SiteInfo):
-            print(f"[CONTROLLER] Done with task: {params.model_dump_json()}")
-            result = ActionResult(is_done=True, extracted_content=params.model_dump_json())
-            return result
-
-        browser_agent = Agent(
-            task=f"""Visit website {state['appUrl']} focusing on:
+        final_result = await use_browser(f"""Visit website {state['appUrl']} focusing on:
              what the website is about, what it does, and what it offers.
              Visit 1 to 3 pages and extract the following information:
              - Description of the website
              - Key features of the website
              - Value proposition of the website
              - app name
-            """,
-            llm=llm,
-            browser=Browser(
-                config=BrowserConfig(
-                    headless=True,
-                    proxy=None,
-                )
-            ),
-            controller=controller
-        )
-            
-        result = await browser_agent.run(max_steps=10)
-        final_result = result.final_result()
+            """, SiteInfo)
+
         if final_result:
             parsed = SiteInfo.model_validate_json(final_result)
             state["appDescription"] = parsed.description
@@ -126,7 +104,8 @@ def create_marketing_graph() -> CompiledStateGraph:
 
         The personas are: {state['personas']}
         
-        Return a list of 5-10 keywords or phrases to search for to find posts to monitor and respond to.
+        Return a list of 5 keywords or phrases to search for to find posts to monitor and respond to.  Do not respond with more than 10 phrases.  
+        Order the key words in order of relevance to {state['appName']} with the most relevant first.
         """
         llm = get_llm()
         structured_llm = llm.with_structured_output(KeywordList)
@@ -174,7 +153,15 @@ def create_marketing_graph() -> CompiledStateGraph:
                 continue
 
         # Update state with competitors
-        state["competitors"] = results
+        prompt2 = f"""Given the list of competitors below determine which are the most relevant competitors, select no more than 10, to {state['appName']} an app that {state['appDescription']}:
+        Order the list with the most relevant competitors first.
+        Potential competitors:
+        {results}
+        """
+        structured_llm = llm.with_structured_output(CompetitorList)
+        response = structured_llm.invoke(prompt2)
+
+        state["competitors"] = response.competitors
         return state
 
     # Create the graph
@@ -186,9 +173,10 @@ def create_marketing_graph() -> CompiledStateGraph:
     workflow.add_node("extract_keywords", extract_keywords)
     workflow.add_node("search_web_for_competitors", search_web_for_competitors)
     workflow.add_node("search_web_for_competitors_by_hint", search_web_for_competitors_by_hint)
+    workflow.add_node("finalize_competitors", finalize_competitors)
     workflow.add_node("get_feedback", get_feedback)
     workflow.add_node("__END__", end)
-    workflow.add_node("finalize_competitors", finalize_competitors)
+
 
     # Create edges
     workflow.add_edge("analyze_site", "create_personas")

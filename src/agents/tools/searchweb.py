@@ -2,8 +2,10 @@ from typing import List
 from langchain_community.tools.tavily_search import TavilySearchResults,TavilyAnswer
 from langchain_community.document_loaders import WebBaseLoader
 from pydantic import BaseModel, Field
-
+from browser_use import ActionResult, Agent, Browser, BrowserConfig, Controller
 from agents.llmtools import get_llm
+
+#Another scrape to consider https://github.com/dendrite-systems/dendrite-python-sdk
 
 class SearchQuery(BaseModel):
     search_query: str = Field(None, description="Search query for retrieval.")
@@ -58,3 +60,29 @@ def scrape_web(url: str)->str:
     #print(resultdoc.metadata)
 
     return resultdoc
+
+async def use_browser(query: str, output_model: type[BaseModel]) -> BaseModel:
+        llm = get_llm()
+        controller = Controller()
+
+        @controller.registry.action('Done with task', param_model=output_model)
+        async def done(params: output_model):
+            #print(f"[CONTROLLER] Done with task: {params.model_dump_json()}")
+            result = ActionResult(is_done=True, extracted_content=params.model_dump_json())
+            return result
+
+        browser_agent = Agent(
+            task=query,
+            llm=llm,
+            browser=Browser(
+                config=BrowserConfig(
+                    headless=True,
+                    proxy=None,
+                )
+            ),
+            controller=controller
+        )
+            
+        result = await browser_agent.run(max_steps=10)
+        final_result = result.final_result()
+        return final_result
