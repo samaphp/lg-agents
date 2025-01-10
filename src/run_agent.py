@@ -16,9 +16,9 @@ agent = all_agents[DEFAULT_AGENT]
 async def main() -> None:
     #inputs = {"messages": [("user", "Create a marketing plan for a new app called SkyAssistant a engagement tool for BlueSky")]}
     initial_state: MarketingPlanState = {
-        "appUrl": "https://www.productfights.com",
-        "competitor_hint": "Product Hunt",
-        "max_personas": 1,
+        "appUrl": "https://www.tvfoodmaps.com",
+        "competitor_hint": "Flavortown USA",
+        "max_personas": 2,
     }
     result = await agent.graph.ainvoke(
         initial_state,
@@ -39,7 +39,7 @@ async def main() -> None:
     # Remove search_results from the result before serializing
     if "search_results" in result:
         del result["search_results"]
-        
+
     json_result = json.dumps(dict(result), default=serialize_obj,indent=2)
     print("RESULT in JSON:")
     print(json_result)

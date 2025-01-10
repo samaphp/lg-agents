@@ -31,6 +31,11 @@ Updates settings .in .env and settings.py file (in core)
 `uv run src/run_agent_stream.py` - run as a single agent with streaming
 
 
+## Additional Tools to Try
+
+* https://python.langchain.com/docs/integrations/tools/
+* https://github.com/dendrite-systems/dendrite-python-sdk
+
 ## Notes to self
 
 UV Help:

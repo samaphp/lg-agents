@@ -47,4 +47,6 @@ class MarketingPlanState(TypedDict):
     competitors: List[Competitor] # Competitors
     keywords: Annotated[List[str], operator.add] # Keywords
     tagline: str # Tagline
+    subreddits: Annotated[List[str], operator.add] # Subreddits
+    marketing_suggestions: List[str] # Marketing suggestions
     search_results: Annotated[List[SearchResult], operator.add] # Search results

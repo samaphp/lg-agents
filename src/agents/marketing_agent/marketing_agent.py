@@ -24,9 +24,14 @@ class SiteInfo(BaseModel):
     keyfeatures: List[str]
     value_proposition: str
 
+class MarketingStrategiesList(BaseModel):
+    strategies: List[str]
 
 class KeywordList(BaseModel):
     keywords: List[str]
+
+class SubredditList(BaseModel):
+    subreddits: List[str]
 
 def create_marketing_graph() -> CompiledStateGraph:
     
@@ -123,7 +128,7 @@ def create_marketing_graph() -> CompiledStateGraph:
     # End node to properly signal completion
     def end(state: workflow_state) -> workflow_state:
         # You can add any final state cleanup or validation here
-        print("Marketing analysis completed:", state)
+        #print("Marketing analysis completed:", state)
         return state
 
     async def finalize_competitors(state: workflow_state) -> workflow_state:
@@ -164,6 +169,35 @@ def create_marketing_graph() -> CompiledStateGraph:
         state["competitors"] = response.competitors
         return state
 
+    async def get_marketing_suggestions(state: workflow_state):
+        prompt = f"""
+        Given the following information about {state['appName']} and its competitors, suggest 5 specific marketing strategies to promote {state['appName']}. 
+        The strategy should be specific and provide actions to take and details someone can act
+
+        App description: {state['appDescription']}
+        Key features: {state['keyfeatures']}
+        Value proposition: {state['value_proposition']}
+        Competitors: {state['competitors']}
+        """
+        llm = get_llm()
+        structured_llm = llm.with_structured_output(MarketingStrategiesList)
+        response = structured_llm.invoke(prompt)
+        print("MARKETING SUGGESTIONS", response.strategies)
+        return {"marketing_suggestions": response.strategies}
+    
+    async def get_subreddits(state: workflow_state):
+        prompt = f"""
+        Given the following information about {state['appName']} and its competitors, suggest 5 subreddits to monitor or post on for {state['appName']}.
+            App description: {state['appDescription']}
+            Key features: {state['keyfeatures']}
+            Value proposition: {state['value_proposition']}
+            Competitors: {state['competitors']}
+        """
+        llm = get_llm()
+        structured_llm = llm.with_structured_output(SubredditList)
+        response = structured_llm.invoke(prompt)
+        return {"subreddits": response.subreddits}
+
     # Create the graph
     workflow = StateGraph(MarketingPlanState,input=MarketingInput)
 
@@ -171,10 +205,12 @@ def create_marketing_graph() -> CompiledStateGraph:
     workflow.add_node("analyze_site", analyze_site)
     workflow.add_node("create_personas", create_personas)
     workflow.add_node("extract_keywords", extract_keywords)
-    workflow.add_node("search_web_for_competitors", search_web_for_competitors)
+    #workflow.add_node("search_web_for_competitors", search_web_for_competitors)
     workflow.add_node("search_web_for_competitors_by_hint", search_web_for_competitors_by_hint)
     workflow.add_node("finalize_competitors", finalize_competitors)
-    workflow.add_node("get_feedback", get_feedback)
+    #workflow.add_node("get_feedback", get_feedback)
+    workflow.add_node("get_marketing_suggestions", get_marketing_suggestions)
+    workflow.add_node("get_subreddits", get_subreddits)
     workflow.add_node("__END__", end)
 
 
@@ -183,8 +219,10 @@ def create_marketing_graph() -> CompiledStateGraph:
     workflow.add_edge("create_personas", "extract_keywords")
     workflow.add_edge("extract_keywords", "search_web_for_competitors_by_hint")
     workflow.add_edge("search_web_for_competitors_by_hint", "finalize_competitors")
-    workflow.add_edge("finalize_competitors", "__END__")
-    
+    workflow.add_edge("finalize_competitors", "get_marketing_suggestions")
+    workflow.add_edge("finalize_competitors", "get_subreddits")
+    workflow.add_edge("get_subreddits", "__END__")
+    workflow.add_edge("get_marketing_suggestions", "__END__")
     # Set entry point
     workflow.set_entry_point("analyze_site")
 
