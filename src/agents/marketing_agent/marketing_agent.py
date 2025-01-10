@@ -182,7 +182,11 @@ def create_marketing_graph() -> CompiledStateGraph:
         llm = get_llm()
         structured_llm = llm.with_structured_output(MarketingStrategiesList)
         response = structured_llm.invoke(prompt)
-        print("MARKETING SUGGESTIONS", response.strategies)
+        # THIS CAUSES langgraph.errors.InvalidUpdateError when get_subreddits does it as well
+        #state["marketing_suggestions"] = response.strategies
+        #return state
+
+        #print("MARKETING SUGGESTIONS", response.strategies)
         return {"marketing_suggestions": response.strategies}
     
     async def get_subreddits(state: workflow_state):
@@ -196,6 +200,8 @@ def create_marketing_graph() -> CompiledStateGraph:
         llm = get_llm()
         structured_llm = llm.with_structured_output(SubredditList)
         response = structured_llm.invoke(prompt)
+        #state["subreddits"] = response.subreddits
+        #return state
         return {"subreddits": response.subreddits}
 
     # Create the graph

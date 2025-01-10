@@ -35,6 +35,8 @@ Updates settings .in .env and settings.py file (in core)
 
 * https://python.langchain.com/docs/integrations/tools/
 * https://github.com/dendrite-systems/dendrite-python-sdk
+* https://simplescraper.io/docs/api-guide
+
 
 ## Notes to self
 
