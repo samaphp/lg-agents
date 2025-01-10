@@ -190,6 +190,7 @@ def create_marketing_graph() -> CompiledStateGraph:
         return {"marketing_suggestions": response.strategies}
     
     async def get_subreddits(state: workflow_state):
+        print("#####GET SUBREDDITS#########")
         prompt = f"""
         Given the following information about {state['appName']} and its competitors, suggest 5 subreddits to monitor or post on for {state['appName']}.
             App description: {state['appDescription']}
@@ -202,6 +203,7 @@ def create_marketing_graph() -> CompiledStateGraph:
         response = structured_llm.invoke(prompt)
         #state["subreddits"] = response.subreddits
         #return state
+        print(f"##### Found {len(response.subreddits)} subreddits")
         return {"subreddits": response.subreddits}
 
     # Create the graph
