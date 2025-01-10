@@ -48,5 +48,5 @@ class MarketingPlanState(TypedDict):
     keywords: Annotated[List[str], operator.add] # Keywords
     tagline: str # Tagline
     subreddits: Annotated[List[str], operator.add] # Subreddits, the operator add seems to cause duplicates
-    marketing_suggestions: List[str] # Marketing suggestions
+    marketing_suggestions: Annotated[List[str], operator.add] # Marketing suggestions
     search_results: Annotated[List[SearchResult], operator.add] # Search results

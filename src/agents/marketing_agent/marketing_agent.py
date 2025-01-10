@@ -65,9 +65,9 @@ def create_marketing_graph() -> CompiledStateGraph:
         response = structured_llm.invoke(prompt)
         
         # Take only up to max_personas
-        state["personas"] = response.personas[:state['max_personas']]
+        #state["personas"] = response.personas[:state['max_personas']]
         #print("ANALYSTS", state["personas"])
-        return state
+        return {"personas": response.personas[:state['max_personas']]}
     
     async def search_web_for_competitors(state: workflow_state):
         results = search_web(f"Find website with a similar value proposition: {state['value_proposition']}")
@@ -80,7 +80,7 @@ def create_marketing_graph() -> CompiledStateGraph:
             #print("SEARCH RESULTS", results)
             return {"search_results": results}
         else:
-            return state
+            return {}
 
     # Research competitors node using Browser Use
     async def analyze_site(state: workflow_state) -> workflow_state:
@@ -97,11 +97,9 @@ def create_marketing_graph() -> CompiledStateGraph:
 
         if final_result:
             parsed = SiteInfo.model_validate_json(final_result)
-            state["appDescription"] = parsed.description
-            state["keyfeatures"] = parsed.keyfeatures
-            state["value_proposition"] = parsed.value_proposition
-            state["appName"] = parsed.appName
-        return state
+            return {"appDescription": parsed.description, "keyfeatures": parsed.keyfeatures, "value_proposition": parsed.value_proposition, "appName": parsed.appName}
+        else:
+            return {}
 
     async def extract_keywords(state: workflow_state) -> workflow_state:
         prompt = f"""
@@ -115,21 +113,19 @@ def create_marketing_graph() -> CompiledStateGraph:
         llm = get_llm()
         structured_llm = llm.with_structured_output(KeywordList)
         response = structured_llm.invoke(prompt)
-        state["keywords"] = response.keywords
-        return state
+        return {"keywords": response.keywords}
     
     # Get human feedback node
     def get_feedback(state: workflow_state) -> workflow_state:
         # Here you could implement actual user interaction
         # For now we'll just store it in state
-        state["human_feedback"] = "Feedback received"
-        return state
+        return {"human_feedback": "Feedback received"}
 
     # End node to properly signal completion
     def end(state: workflow_state) -> workflow_state:
         # You can add any final state cleanup or validation here
         #print("Marketing analysis completed:", state)
-        return state
+        return {}
 
     async def finalize_competitors(state: workflow_state) -> workflow_state:
         """
@@ -166,8 +162,7 @@ def create_marketing_graph() -> CompiledStateGraph:
         structured_llm = llm.with_structured_output(CompetitorList)
         response = structured_llm.invoke(prompt2)
 
-        state["competitors"] = response.competitors
-        return state
+        return {"competitors": response.competitors}
 
     async def get_marketing_suggestions(state: workflow_state):
         prompt = f"""
