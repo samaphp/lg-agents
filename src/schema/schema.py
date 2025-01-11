@@ -1,3 +1,5 @@
+from datetime import datetime
+from enum import Enum
 from typing import Any, Literal, NotRequired
 
 from pydantic import BaseModel, Field, SerializeAsAny
@@ -6,6 +8,18 @@ from pydantic import model_validator
 
 from schema.models import AllModelEnum, AnthropicModelName, OpenAIModelName
 
+
+class AgentStatus(str, Enum):
+    RUNNING = "running"
+    COMPLETED = "completed"
+    ERROR = "error"
+
+class AgentState:
+    def __init__(self):
+        self.status = AgentStatus.RUNNING
+        self.start_time = datetime.utcnow()
+        self.last_update = datetime.utcnow()
+        self.current_state = {}
 
 class AgentInfo(BaseModel):
     """Info about an available agent."""
@@ -176,3 +190,5 @@ class ChatHistoryInput(BaseModel):
 
 class ChatHistory(BaseModel):
     messages: list[ChatMessage]
+
+

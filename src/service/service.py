@@ -3,8 +3,11 @@ import logging
 import warnings
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import Annotated, Any
+from typing import Annotated, Any, Dict
 from uuid import UUID, uuid4
+from enum import Enum
+from datetime import datetime
+from fastapi import BackgroundTasks
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, status
 from fastapi.responses import StreamingResponse
@@ -27,6 +30,8 @@ from schema import (
     ServiceMetadata,
     StreamInput,
     UserInput,
+    AgentStatus,
+    AgentState,
 )
 from service.utils import (
     convert_message_content_to_string,
@@ -136,10 +141,7 @@ async def message_generator(
     agent: CompiledStateGraph = get_agent(agent_id)
     kwargs, run_id = _parse_input(user_input)
 
-    thread = {"configurable": {"thread_id": "1"}}
-
-    print("KWARGS", kwargs)
-
+    #print("KWARGS", kwargs)
 
     def serialize_obj(obj):
         if hasattr(obj, 'model_dump'):  # Handle Pydantic models
@@ -256,5 +258,62 @@ async def health_check():
     """Health check endpoint."""
     return {"status": "ok"}
 
+
+# Add this after existing global variables
+running_agents: Dict[str, AgentState] = {}
+
+# Add these new endpoints
+@router.post("/{agent_id}/start")
+async def start_agent(
+    background_tasks: BackgroundTasks,
+    user_input: UserInput,
+    agent_id: str = DEFAULT_AGENT
+) -> dict:
+    """Start an agent running in the background"""
+    agent: CompiledStateGraph = get_agent(agent_id)
+    kwargs, run_id = _parse_input(user_input)
+    
+    # Create new agent state tracker
+    agent_state = AgentState()
+    running_agents[str(run_id)] = agent_state
+    
+    async def run_agent():
+        print("RUNNING AGENT")
+        try:
+            async for event in agent.astream(**kwargs, stream_mode="values"):
+                agent_state.current_state = event
+                agent_state.last_update = datetime.utcnow()
+            print("AGENT COMPLETED")
+            agent_state.status = AgentStatus.COMPLETED
+        except Exception as e:
+            logger.error(f"Agent error: {e}")
+            agent_state.status = AgentStatus.ERROR
+    
+    # Add task to background tasks
+    background_tasks.add_task(run_agent)
+    
+    return {
+        "run_id": str(run_id),
+        "status": "started",
+        "message": "Agent started successfully"
+    }
+
+@router.get("/agent/{run_id}/status")
+async def get_agent_status(run_id: str) -> dict:
+    """Get the current status of a running agent"""
+    if run_id not in running_agents:
+        raise HTTPException(
+            status_code=404,
+            detail="Agent not found. The run_id may be invalid or the agent has completed."
+        )
+    
+    agent_state = running_agents[run_id]
+    return {
+        "run_id": run_id,
+        "status": agent_state.status,
+        "start_time": agent_state.start_time,
+        "last_update": agent_state.last_update,
+        "current_state": agent_state.current_state
+    }
 
 app.include_router(router)

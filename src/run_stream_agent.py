@@ -4,7 +4,7 @@ import json
 from dotenv import load_dotenv
 from langchain_core.runnables import RunnableConfig
 
-from agents.marketing_agent.marketing_schema import MarketingPlanState
+from agents.marketing_agent.marketing_schema import MarketingInput, MarketingPlanState
 
 load_dotenv()
 
@@ -15,10 +15,13 @@ agent = all_agents[DEFAULT_AGENT]
 
 async def main() -> None:
     #inputs = {"messages": [("user", "Create a marketing plan for a new app called SkyAssistant a engagement tool for BlueSky")]}
-    initial_state: MarketingPlanState = {
-        "appName": "Saas Fights a SaaS battle for the best SaaS tools",
-        "max_personas": 1,
+    initial_state: MarketingInput = {
+        "appUrl": "https://www.tvfoodmaps.com",
+        "competitor_hint": "Flavortown USA",
+        "max_personas": 2,
     }
+
+    
     thread = {"configurable": {"thread_id": "1"}}
 
     # Convert the AddableValuesDict to a regular dict and then to JSON
