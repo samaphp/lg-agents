@@ -8,11 +8,13 @@ ENV UV_COMPILE_BYTECODE=1
 COPY pyproject.toml .
 COPY uv.lock .
 RUN pip install --no-cache-dir uv
-# Only install the client dependencies
-RUN uv sync --frozen --only-group client
+RUN uv sync --frozen --no-install-project --no-dev
 
-COPY src/client/ ./client/
+COPY .env .
+COPY src/agents/ ./agents/
+COPY src/core/ ./core/
 COPY src/schema/ ./schema/
-COPY src/streamlit_app.py .
+COPY src/service/ ./service/
+COPY src/run_service.py .
 
-CMD ["streamlit", "run", "streamlit_app.py"]
+CMD ["python", "run_service.py"]

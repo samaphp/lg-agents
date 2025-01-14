@@ -3,6 +3,9 @@
 checkpoints.db
 checkpoints.db-*
 
+ecs_setup.md
+task-definition.json
+
 # VSCode
 .vscode
 .DS_Store
