@@ -9,6 +9,8 @@ COPY pyproject.toml .
 COPY uv.lock .
 RUN pip install --no-cache-dir uv
 RUN uv sync --frozen --no-install-project --no-dev
+RUN pip install playwright && playwright install --with-deps
+
 
 COPY .env .
 COPY src/agents/ ./agents/

@@ -51,3 +51,12 @@ Run service
 `python src/run_service.py`
 
 
+
+## DEPLOAY agent to ECS
+
+`./deploy.sh`
+
+DNS name will be displayed verify it is working.
+
+http://my-agent-alb-1226714337.us-east-1.elb.amazonaws.com/health
+
