@@ -18,5 +18,7 @@ COPY src/core/ ./core/
 COPY src/schema/ ./schema/
 COPY src/service/ ./service/
 COPY src/run_service.py .
+RUN mkdir logs
+
 
 CMD ["python", "run_service.py"]

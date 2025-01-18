@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import warnings
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
@@ -315,5 +316,54 @@ async def get_agent_status(run_id: str) -> dict:
         "last_update": agent_state.last_update,
         "current_state": agent_state.current_state
     }
+
+@router.get("/logs")
+async def list_logs() -> dict:
+    """Get a list of available log files"""
+    try:
+        log_files = [f for f in os.listdir("logs") if f.endswith(".txt")]
+        return {
+            "log_files": log_files
+        }
+    except Exception as e:
+        logger.error(f"Error listing log files: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Error retrieving log files"
+        )
+
+@router.get("/logs/{filename}")
+async def get_log_content(filename: str) -> dict:
+    """Get the content of a specific log file"""
+    try:
+        file_path = os.path.join("logs", filename)
+        if not os.path.exists(file_path):
+            raise HTTPException(
+                status_code=404,
+                detail="Log file not found"
+            )
+            
+        if not filename.endswith(".txt"):
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid file type - only .txt files are supported"
+            )
+            
+        with open(file_path, "r") as f:
+            content = f.read()
+            
+        return {
+            "filename": filename,
+            "content": content
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error reading log file {filename}: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Error reading log file"
+        )
+
 
 app.include_router(router)

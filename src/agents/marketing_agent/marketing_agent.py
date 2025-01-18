@@ -9,7 +9,7 @@ from langgraph.graph.state import CompiledStateGraph
 from langgraph.checkpoint.memory import MemorySaver
 from pydantic import BaseModel, Field
 
-from agents.tools.searchweb import scrape_web, search_web, search_web_with_query, use_browser
+from agents.tools.searchweb import scrape_web, scrape_web_agent, search_web, search_web_with_query, use_browser
 from agents.tools.wikisearch import search_wikipedia_with_query
 
 class PersonaList(BaseModel):
@@ -81,6 +81,27 @@ def create_marketing_graph() -> CompiledStateGraph:
             return {"search_results": results}
         else:
             return {}
+
+    # Research competitors node using Browser Use
+    async def analyze_site2(state: workflow_state) -> workflow_state:
+        url = state["appUrl"]
+        print("ANALYZING SITE", url)
+        final_result = await scrape_web_agent(url,
+            f"Analyze this website and extract the following information in a structured way: \n"
+            f"- App name\n"
+            f"- Description\n"
+            f"- Key features (as a list)\n"
+            f"- Value proposition\n",
+            SiteInfo
+        )
+        
+        # Convert the final_result to JSON string if it's an object
+        if not isinstance(final_result, (str, bytes, bytearray)):
+            final_result = final_result.model_dump_json()
+        
+        parsed = SiteInfo.model_validate_json(final_result)
+        return {"appDescription": parsed.description, "keyfeatures": parsed.keyfeatures, "value_proposition": parsed.value_proposition, "appName": parsed.appName}
+
 
     # Research competitors node using Browser Use
     async def analyze_site(state: workflow_state) -> workflow_state:

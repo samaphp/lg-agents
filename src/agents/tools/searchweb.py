@@ -61,6 +61,17 @@ def scrape_web(url: str)->str:
 
     return resultdoc
 
+async def scrape_web_agent(url: str, query: str, output_model: type[BaseModel]) -> BaseModel:
+    llm = get_llm()
+    doc = scrape_web(url)
+    structured_llm = llm.with_structured_output(output_model)
+    result = structured_llm.invoke(
+        [query + "\n\n" + doc.page_content],
+        config={"temperature": 0.3}
+    )
+    #print(result)
+    return result
+
 async def use_browser(query: str, output_model: type[BaseModel]) -> BaseModel:
         llm = get_llm()
         controller = Controller()
@@ -80,7 +91,8 @@ async def use_browser(query: str, output_model: type[BaseModel]) -> BaseModel:
                     proxy=None,
                 )
             ),
-            controller=controller
+            controller=controller,
+            save_conversation_path="logs/conversation.json"
         )
             
         result = await browser_agent.run(max_steps=10)
