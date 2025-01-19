@@ -309,6 +309,7 @@ async def start_agent(
 @router.get("/agent/{run_id}/status")
 async def get_agent_status(run_id: str) -> dict:
     """Get the current status of a running agent"""
+    print("GETTING AGENT STATUS", run_id)
     if run_id not in running_agents:
         raise HTTPException(
             status_code=404,

@@ -72,7 +72,7 @@ async def scrape_web_agent(url: str, query: str, output_model: type[BaseModel]) 
     #print(result)
     return result
 
-async def use_browser(query: str, output_model: type[BaseModel]) -> BaseModel:
+async def use_browser(query: str, output_model: type[BaseModel], max_steps: int = 10) -> BaseModel:
         llm = get_llm()
         controller = Controller()
 
@@ -95,6 +95,6 @@ async def use_browser(query: str, output_model: type[BaseModel]) -> BaseModel:
             save_conversation_path="logs/conversation.json"
         )
             
-        result = await browser_agent.run(max_steps=10)
+        result = await browser_agent.run(max_steps=max_steps)
         final_result = result.final_result()
         return final_result

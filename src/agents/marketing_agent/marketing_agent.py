@@ -82,8 +82,8 @@ def create_marketing_graph() -> CompiledStateGraph:
         else:
             return {}
 
-    # Research competitors node using Browser Use
-    async def analyze_site2(state: workflow_state) -> workflow_state:
+    # Research competitors node using web scraping 
+    async def analyze_site(state: workflow_state) -> workflow_state:
         url = state["appUrl"]
         print("ANALYZING SITE", url)
         final_result = await scrape_web_agent(url,
@@ -104,7 +104,7 @@ def create_marketing_graph() -> CompiledStateGraph:
 
 
     # Research competitors node using Browser Use
-    async def analyze_site(state: workflow_state) -> workflow_state:
+    async def analyze_site2(state: workflow_state) -> workflow_state:
         results = []
 
         final_result = await use_browser(f"""Visit website {state['appUrl']} focusing on:
@@ -114,7 +114,7 @@ def create_marketing_graph() -> CompiledStateGraph:
              - Key features of the website
              - Value proposition of the website
              - app name
-            """, SiteInfo)
+            """, SiteInfo,6) #Max steps is 6
 
         if final_result:
             parsed = SiteInfo.model_validate_json(final_result)

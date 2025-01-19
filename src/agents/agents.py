@@ -2,7 +2,6 @@ from dataclasses import dataclass
 
 from langgraph.graph.state import CompiledStateGraph
 
-from agents.bg_task_agent.bg_task_agent import bg_task_agent
 from agents.marketing_agent.marketing_agent import marketing_agent
 from schema import AgentInfo
 
@@ -16,8 +15,8 @@ class Agent:
 
 
 all_agents: dict[str, Agent] = {
-    "bg-task-agent": Agent(description="A background task agent.", graph=bg_task_agent),
-    "marketing-agent": Agent(description="A marketing agent.", graph=marketing_agent),
+    #ADD Agents HERE
+   "marketing-agent": Agent(description="A marketing agent.", graph=marketing_agent),
 }
 
 
