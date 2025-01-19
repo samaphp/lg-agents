@@ -56,6 +56,45 @@ Run service
 
 `./deploy.sh`
 
-DNS name will be displayed verify it is working.
+DNS name will be displayed verify it is working.  Details for setting up ECS are not provided here.
 
+
+## API Documentation
+
+### Service Information
+- `GET /info` - Get metadata about available agents, models and defaults
+
+### Agent Interaction
+- `POST /{agent_id}/invoke` - Invoke an agent synchronously and get final response
+- `POST /invoke` - Invoke default agent synchronously
+- `POST /{agent_id}/stream` - Stream agent responses including intermediate steps
+- `POST /stream` - Stream default agent responses
+
+### Background Agent Management  
+- `POST /{agent_id}/start` - Start an agent running in background
+- `GET /agent/{run_id}/status` - Get status of background running agent
+
+### Chat History
+- `POST /history` - Get chat history for a thread
+
+### Feedback
+- `POST /feedback` - Record feedback for an agent run to LangSmith
+
+### Logs
+- `GET /logs` - List available log files
+- `GET /logs/{filename}` - Get content of specific log file
+
+### Health Check
+- `GET /health` - Simple health check endpoint
+
+### Authentication
+- All endpoints except `/health` require Bearer token authentication if AUTH_SECRET is set
+- Pass token in Authorization header: `Bearer <AUTH_SECRET>`
+
+### Common Parameters
+- `thread_id` - Used to maintain conversation context across requests
+- `model` - Override default model
+- `agent_id` - Specify agent to use (defaults to DEFAULT_AGENT)
+- `state` - Initial state for state-based agents
+- `message` - Input message for chat-based agents
 
