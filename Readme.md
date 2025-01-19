@@ -58,5 +58,4 @@ Run service
 
 DNS name will be displayed verify it is working.
 
-http://my-agent-alb-1226714337.us-east-1.elb.amazonaws.com/health
 

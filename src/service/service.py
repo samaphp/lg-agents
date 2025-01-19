@@ -231,6 +231,7 @@ async def feedback(feedback: Feedback) -> FeedbackResponse:
     return FeedbackResponse()
 
 
+# TODO: Remove this or test it (currently not used)
 @router.post("/history")
 def history(input: ChatHistoryInput) -> ChatHistory:
     """
@@ -273,9 +274,14 @@ async def start_agent(
     """Start an agent running in the background"""
     agent: CompiledStateGraph = get_agent(agent_id)
     kwargs, run_id = _parse_input(user_input)
-    
+
+    # Extract thread_id from kwargs config
+    thread_id = kwargs["config"]["configurable"]["thread_id"]
+    #print("THREAD ID", thread_id)
+
     # Create new agent state tracker
     agent_state = AgentState()
+    agent_state.thread_id = thread_id
     running_agents[str(run_id)] = agent_state
     
     async def run_agent():
@@ -295,6 +301,7 @@ async def start_agent(
     
     return {
         "run_id": str(run_id),
+        "thread_id": thread_id,
         "status": "started",
         "message": "Agent started successfully"
     }
@@ -309,14 +316,17 @@ async def get_agent_status(run_id: str) -> dict:
         )
     
     agent_state = running_agents[run_id]
+    
     return {
         "run_id": run_id,
+        "thread_id": agent_state.thread_id,
         "status": agent_state.status,
         "start_time": agent_state.start_time,
         "last_update": agent_state.last_update,
         "current_state": agent_state.current_state
     }
 
+# This is for browser use logs
 @router.get("/logs")
 async def list_logs() -> dict:
     """Get a list of available log files"""

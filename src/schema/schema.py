@@ -20,6 +20,7 @@ class AgentState:
         self.start_time = datetime.utcnow()
         self.last_update = datetime.utcnow()
         self.current_state = {}
+        self.thread_id = ""
 
 class AgentInfo(BaseModel):
     """Info about an available agent."""

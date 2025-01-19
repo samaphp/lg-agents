@@ -1,3 +1,4 @@
+import logging
 import uvicorn
 from dotenv import load_dotenv
 import signal
@@ -7,13 +8,18 @@ from core import settings
 
 load_dotenv()
 
-VERSION = "0.0.4"
+VERSION = "0.0.5"
 
 def handle_shutdown(signum, frame):
     print("\nReceived shutdown signal. Exiting gracefully...")
     sys.exit(0)
 
 if __name__ == "__main__":
+
+    logging.basicConfig(
+        level=logging.INFO,  # Set default level
+    )
+
     # Register signal handlers
     signal.signal(signal.SIGINT, handle_shutdown)  # Handle Ctrl+C
     signal.signal(signal.SIGTERM, handle_shutdown)  # Handle termination signal
