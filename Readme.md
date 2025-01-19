@@ -1,12 +1,12 @@
 # Sample AI Agent using LangGraph
 
-This work is based on [this repo](https://github.com/JoshuaC215/agent-service-toolkit) which was created by [JoshuaC215](https://github.com/JoshuaC215).  Thanks!
+This work is based on [this repo](https://github.com/JoshuaC215/agent-service-toolkit) which was created by [JoshuaC215](https://github.com/JoshuaC215).  Thanks! 
 
 This also uses the great product [Browser Use](https://browseruse.com/) to browse the web.
 
 ## Follow Along
 
-Follow along as I post about program on my [websites](https://apsquared.co) and my Bluesky account [@apsquared](https://bsky.app/profile/apsquared.bsky.social).
+Follow along as I post about program on my [websites](https://apsquared.co), [X account](https://x.com/APSquaredDev) and my Bluesky account [@apsquared](https://bsky.app/profile/apsquared.bsky.social).
 
 Disclaimer: I'm not an expert at Python or LangGraph, just a developer trying to play with AI Agents and hoping to help others.
 
@@ -16,7 +16,11 @@ I wanted to create a simple AI agent that uses LangGraph and Browser Use and can
 
 ## Client
 
-Part of what I wanted to do is to demonstrate a totally disconnected client that can be used to interact with the agent.  The client project [can be found here](https://github.com/apsquared/lg-agent-client).
+Part of what I wanted to do is to demonstrate a totally disconnected client that can be used to interact with the agent.  The client project [can be found here](https://github.com/apsquared/lg-agent-client).  This is a generic client that you can cut and paste into your own project.
+
+## Try Out the Sample Agent (Marketing Agent)
+
+The very simple marketing agent can be found [to try on Apquared.co](https://www.apsquared.co/tools/saas-marketing-agent)
 
 ## Settings
 
