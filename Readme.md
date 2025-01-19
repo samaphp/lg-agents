@@ -30,25 +30,41 @@ Updates settings .in .env and settings.py file (in core)
 
 `uv run src/run_agent_stream.py` - run as a single agent with streaming
 
+## Adding new Agents
+
+To add a new agent to the system, follow these steps:
+
+1. Create a new folder in src/agents/
+   - Define the agent using LangGraph/LangChain patterns in <agent_name>_agent.py
+   - Add type hints and docstrings
+   - Create a schema file in the directory <agent_name>_schema.py for agent specific schemas
+   - Return the agent object
+
+2. Register the agent in the AGENTS dictionary in `src/agents/agents.py`:
+   ```python
+   AGENTS = {
+       "existing_agent": existing_agent_function,
+       "your_new_agent": your_new_agent_function
+   }
+   ```
+
+3. (Optional) Add any new tools needed by your agent in `src/tools/`:
+   - Create new tool functions
+   - Add tool configurations
+   - Import and include tools in your agent definition
+
+4. (Optional) Add new environment variables in `.env` if required by your agent
+
+5. Update the run_agent.py to specify the new agent and its input:
+   ```bash
+   uv run src/run_agent.py
+   ```
 
 ## Additional Tools to Try
 
 * https://python.langchain.com/docs/integrations/tools/
 * https://github.com/dendrite-systems/dendrite-python-sdk
 * https://simplescraper.io/docs/api-guide
-
-
-## Notes to self
-
-UV Help:
-https://docs.astral.sh/uv/guides/projects/
-
-
-Activate venv
-`source .venv/bin/activate`
-
-Run service
-`python src/run_service.py`
 
 
 
