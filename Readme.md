@@ -14,6 +14,10 @@ Disclaimer: I'm not an expert at Python or LangGraph, just a developer trying to
 
 I wanted to create a simple AI agent that uses LangGraph and Browser Use and can be easily deployed. 
 
+## Overview Diagram
+
+![Overview Diagram](https://apsquared.co/agent_arch.png)
+
 ## Client
 
 Part of what I wanted to do is to demonstrate a totally disconnected client that can be used to interact with the agent.  The client project [can be found here](https://github.com/apsquared/lg-agent-client).  This is a generic client that you can cut and paste into your own project.
