@@ -70,11 +70,12 @@ To add a new agent to the system, follow these steps:
    uv run src/run_agent.py
    ```
 
-## Additional Tools to Try
+## Additional Tools to Try / Reference Pages
 
 * https://python.langchain.com/docs/integrations/tools/
 * https://github.com/dendrite-systems/dendrite-python-sdk
 * https://simplescraper.io/docs/api-guide
+* https://langchain-ai.github.io/langgraph/concepts/low_level/
 
 
 

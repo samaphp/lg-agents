@@ -22,7 +22,7 @@
   - Use LangGraph for building AI agents.
   - Keep things simple and modular.
   - When communicating with LLMs you structured output.  
-  
+  - When creating schemas to be used by LLMs avoid List[type] and use a Pydantic model instead.
 
   Dependencies
   - FastAPI

@@ -251,7 +251,11 @@ def create_marketing_graph() -> CompiledStateGraph:
     workflow.set_entry_point("analyze_site")
 
     # Compile graph
-    return workflow.compile(checkpointer=MemorySaver())
+    graph =  workflow.compile(checkpointer=MemorySaver())
+    graph_image = graph.get_graph(xray=True).draw_mermaid_png()
+    with open("marketing_agent_graph.png", "wb") as f:
+        f.write(graph_image)
+    return graph
 
 #define the graph
 marketing_agent = create_marketing_graph()
