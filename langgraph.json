@@ -1,8 +1,12 @@
 {
-    "python_version": "3.12",
-    "dependencies": ["."],
-    "graphs": {
-        "marketing_agent": "./src/agents/marketing_agent/marketing_agent.py:marketing_agent"
-    },
-    "env": "./.env"
+  "graphs": {
+    "marketing_agent": "./src/agents/marketing_agent/marketing_agent.py:marketing_agent",
+    "college_agent": "./src/agents/college_finder_agent/college_agent.py:college_finder_agent",
+    "roster_agent": "./src/agents/college_finder_agent/team_roster_agent.py:team_roster_agent"
+  },
+  "env": "./.env",
+  "python_version": "3.12",
+  "dependencies": [
+    "."
+  ]
 }

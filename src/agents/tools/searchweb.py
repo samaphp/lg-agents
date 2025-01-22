@@ -64,7 +64,7 @@ def scrape_web(url: str)->str:
 async def scrape_web_agent(url: str, query: str, output_model: type[BaseModel]) -> BaseModel:
     llm = get_llm()
     doc = scrape_web(url)
-    print(doc.page_content)
+    #print(doc.page_content)
     structured_llm = llm.with_structured_output(output_model)
     result = structured_llm.invoke(
         [query + "\n\n" + doc.page_content],

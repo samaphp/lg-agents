@@ -9,7 +9,6 @@ from pydantic import BaseModel, Field
 from langgraph.prebuilt import ToolNode
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langchain_core.tools import tool
-from IPython.display import Image, display
 from agents.tools.searchweb import search_web_get_answer, search_web_with_query, use_browser, SearchResult
 from agents.tools.wikisearch import search_wikipedia_with_query
 from langgraph.constants import Send
@@ -366,7 +365,7 @@ def create_college_finder_graph() -> CompiledStateGraph:
         Order the recommendations by relevance to the student's criteria and the colleges found.
 
         Do not use markdown or any formatting.
-        
+
         """
         
         llm = get_llm()
