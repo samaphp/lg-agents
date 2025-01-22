@@ -4,7 +4,7 @@ import json
 from dotenv import load_dotenv
 from langchain_core.runnables import RunnableConfig
 
-from agents.college_finder_agent.college_agent_schema import CollegeFinderState
+from agents.college_finder_agent.college_agent_schema import CollegeFinderInput, CollegeFinderState
 from agents.marketing_agent.marketing_schema import MarketingInput, MarketingPlanState
 
 load_dotenv()
@@ -16,16 +16,13 @@ agent = all_agents["college-agent"]
 
 async def main() -> None:
     #inputs = {"messages": [("user", "Create a marketing plan for a new app called SkyAssistant a engagement tool for BlueSky")]}
-    initial_state: CollegeFinderState = {
+    initial_state: CollegeFinderInput = {
         "major": "any major",
-        "location_preference": "Pennsylvania",
-        "max_tuition": 80000,
+        "location_preference": "Rhode Island",
         "min_acceptance_rate": 30,
-        "max_colleges": 15,
-        "search_query": "division 3 baseball schools",
-        "search_results": [],
-        "colleges": [],
-        "recommendations": []
+        "max_colleges": 10,
+        "search_query": "division 3 baseball schools campus size greater than 1500 students",
+        "sat_score": 1200,
     }
     result = await agent.graph.ainvoke(
         initial_state,
