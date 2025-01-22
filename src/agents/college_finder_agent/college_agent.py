@@ -362,6 +362,11 @@ def create_college_finder_graph() -> CompiledStateGraph:
         1. Which colleges might be the best fit and why
         2. What aspects of these colleges align with the student's criteria
         3. Any additional considerations or next steps
+
+        Order the recommendations by relevance to the student's criteria and the colleges found.
+
+        Do not use markdown or any formatting.
+        
         """
         
         llm = get_llm()

@@ -18,7 +18,7 @@ async def main() -> None:
     #inputs = {"messages": [("user", "Create a marketing plan for a new app called SkyAssistant a engagement tool for BlueSky")]}
     initial_state: CollegeFinderInput = {
         "major": "any major",
-        "location_preference": "Rhode Island",
+        "location_preference": "Virginia",
         "min_acceptance_rate": 30,
         "max_colleges": 10,
         "search_query": "division 3 baseball schools campus size greater than 1500 students",
