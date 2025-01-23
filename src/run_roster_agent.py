@@ -1,20 +1,28 @@
 import asyncio
+import os
 from uuid import uuid4
 import json
-from dotenv import load_dotenv
+from dotenv import find_dotenv, load_dotenv
 from langchain_core.runnables import RunnableConfig
 
 from agents.college_finder_agent.team_roster_agent import create_team_roster_graph, RosterAgentInput
 
-load_dotenv()
+
 
 async def main() -> None:
+    load_dotenv()
+    dotenv_path = find_dotenv()
+    print(f"Found .env at: {dotenv_path}")
+    if not dotenv_path:
+        print("No .env file found!")
+    #print("OPENAI_API_KEY:", os.getenv("OPENAI_API_KEY"))
+    #print("TAVILY_API_KEY:", os.getenv("TAVILY_API_KEY"))
     # Create the agent
     agent = create_team_roster_graph()
 
     # Initialize state
     initial_state = RosterAgentInput(
-        college_name="University of Scranton"
+        college_name="Arcadia University"
     )
 
     # Run the agent

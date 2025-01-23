@@ -32,14 +32,41 @@ class PlayerState(TypedDict):
 
 def find_player_links(state: PlayerState) -> PlayerState:
     """Find the player links for the roster."""
+    VALID_SITES = [
+        "perfectgame.org",
+        "ps-baseball.com",
+        "prepbaseballreport.com"
+    ]
     print(f"Finding player links for: {state['player'].name}")
-    state["player"].links = ["https://www.google.com", "https://www.yahoo.com"]
+    query = f"{state['player'].name} baseball"
+
+    results = search_web_with_query(query,max_results=10)
+    #print("\nDirect Search Results:")
+    for result in results:
+        if any(site.lower() in result.link.lower() for site in VALID_SITES):
+            state["player"].links.append(result.link)
+
     return state
 
-def extract_player_info(state: PlayerState) -> TeamRosterState:
+async def extract_player_info(state: PlayerState) -> TeamRosterState:
     """Extract the player info from the links."""
     print(f"Extracting player info from: {state}")
-    state["player"].velocity = "95 mph"
+
+    class FastballVelocity(BaseModel):
+        velocity: str = Field(description="The top fastball velocity of the player")
+
+    for link in state["player"].links:
+        # Only check velocity if player is a pitcher
+        if state["player"].position and state["player"].position.lower() in ["p", "lhp", "rhp", "pitcher"]:
+            # Extract roster information using scrape_web_agent
+            velo = await scrape_web_agent(
+                link,
+                """From the data provided find the top fastball velocity of the player""",
+                FastballVelocity
+            )
+            if velo.velocity:
+                state["player"].velocity = velo.velocity
+                break
     return {"team": {"players": [state["player"]]}}
 
 
@@ -63,7 +90,7 @@ def create_team_roster_graph():
 
 
         results = search_web_with_query(f"What is the offical .edu url of the {college_name} baseball team 2024 or 2025 roster",max_results=5)
-        print("\nDirect Search Results:")
+        #print("\nDirect Search Results:")
         for result in results:
             print(f"\nURL: {result.link}")
             print(f"Content: {result.content[:200]}...")

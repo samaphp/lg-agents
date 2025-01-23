@@ -28,11 +28,20 @@ def search_web_with_query(query: str, max_results: int = 3)->List[SearchResult]:
     
     """ Retrieve docs from web search """
 
-    tavily_search = TavilySearchResults(max_results=max_results,include_answer=True,include_raw_content=True)
-
+    import os
+    tavily_search = TavilySearchResults(
+        max_results=max_results,
+        include_answer=False,
+        include_raw_content=True,
+        api_key=os.getenv("TAVILY_API_KEY")
+    )
     # Search
     search_docs = tavily_search.invoke(query)
-
+    # Check if search_docs is a string (likely an error)
+    if isinstance(search_docs, str):
+        print(f"Error in search results: {search_docs}")
+        return []  # Return empty list to avoid downstream errors
+   
     return [SearchResult(link=doc["url"], content=doc["content"]) for doc in search_docs]
 
 
