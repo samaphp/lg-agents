@@ -26,3 +26,4 @@ class TeamRosterState(TypedDict):
     college_name: str
     roster_url: str | None
     team: Team | None
+    summary: str | None

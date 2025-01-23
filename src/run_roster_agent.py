@@ -22,7 +22,7 @@ async def main() -> None:
 
     # Initialize state
     initial_state = RosterAgentInput(
-        college_name="Arcadia University"
+        college_name="University of Scranton"
     )
 
     # Run the agent

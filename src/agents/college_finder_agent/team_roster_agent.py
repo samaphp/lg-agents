@@ -145,7 +145,25 @@ def create_team_roster_graph():
     def summarize_roster(state: TeamRosterState) -> TeamRosterState:
         """Summarize the roster information."""
         print(f"Summarizing roster information for: {state['team'].team_name}")
-        return state
+        if not state.get("team"):
+            print("No team information to summarize")
+            return state
+
+        llm = get_llm()
+        prompt = f"""Analyze the following college baseball team roster and provide a concise summary highlighting:
+        - Total number of players
+        - Include the average, lowest an highest velocity of the pitchers
+        - Notable patterns in player demographics (hometowns, height trends)
+        - Any other interesting insights to help determine if the team is a good fit for a player
+
+        Team Information:
+        {state['team'].model_dump_json(indent=2)}
+        """
+
+        summary = llm.invoke(prompt, config={"temperature": 0.7})
+        
+        return {"summary": summary.content}
+     
     
     # Create a subgraph for processing a players info
     player_graph = StateGraph(PlayerState)
