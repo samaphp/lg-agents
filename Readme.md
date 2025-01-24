@@ -24,9 +24,16 @@ Built with [DiagramGPT](https://www.eraser.io/diagramgpt)
 
 Part of what I wanted to do is to demonstrate a totally disconnected client that can be used to interact with the agent.  The client project [can be found here](https://github.com/apsquared/lg-agent-client).  This is a generic client that you can cut and paste into your own project.
 
-## Try Out the Sample Agent (Marketing Agent)
+## Try Out the Sample Agents 
+
+### Marketing Agent
 
 The very simple marketing agent can be found [to try on Apquared.co](https://www.apsquared.co/tools/saas-marketing-agent)
+
+### College Finder Agent
+
+The college finder agent can be found [to try on Apquared.co](https://www.apsquared.co/tools/college-finder-agent)
+
 
 ## Settings
 

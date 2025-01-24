@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 from langgraph.graph.state import CompiledStateGraph
 
+from agents.college_finder_agent import team_roster_agent
 from agents.college_finder_agent.college_agent import college_finder_agent
 from agents.marketing_agent.marketing_agent import marketing_agent
 from schema import AgentInfo
@@ -19,6 +20,7 @@ all_agents: dict[str, Agent] = {
     #ADD Agents HERE
    "marketing-agent": Agent(description="A marketing agent.", graph=marketing_agent),
    "college-agent": Agent(description="A college agent.", graph=college_finder_agent),
+   "team-roster-agent": Agent(description="A team roster agent.", graph=team_roster_agent),
 }
 
 

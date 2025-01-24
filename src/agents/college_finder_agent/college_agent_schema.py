@@ -39,6 +39,7 @@ class College(BaseModel):
         description="URL of the college website if available"
     )
     has_missing_fields: bool = False
+    
 def colleges_reducer(current: List[College], update: List[College] | None) -> List[College]:
     #print("REDUCER Called")
     if update is None:
