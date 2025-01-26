@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from langgraph.graph.state import CompiledStateGraph
 
-from agents.college_finder_agent import team_roster_agent
+from agents.college_finder_agent.team_roster_agent import team_roster_agent
 from agents.college_finder_agent.college_agent import college_finder_agent
 from agents.marketing_agent.marketing_agent import marketing_agent
 from schema import AgentInfo
