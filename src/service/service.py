@@ -311,13 +311,14 @@ async def get_agent_status(run_id: str) -> dict:
     """Get the current status of a running agent"""
     print("GETTING AGENT STATUS", run_id)
     if run_id not in running_agents:
+        print("AGENT STATU NOT FOUND")
         raise HTTPException(
             status_code=404,
             detail="Agent not found. The run_id may be invalid or the agent has completed."
         )
     
     agent_state = running_agents[run_id]
-    
+    print("RETURNINGAGENT STATE", agent_state)
     return {
         "run_id": run_id,
         "thread_id": agent_state.thread_id,
