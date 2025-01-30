@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import traceback
 import warnings
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
@@ -293,7 +294,7 @@ async def start_agent(
             print("AGENT COMPLETED")
             agent_state.status = AgentStatus.COMPLETED
         except Exception as e:
-            logger.error(f"Agent error: {e}")
+            logger.error(f"Agent error: {e}\nTraceback: {traceback.format_exc()}")
             agent_state.status = AgentStatus.ERROR
     
     # Add task to background tasks
