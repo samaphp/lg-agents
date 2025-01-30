@@ -91,54 +91,55 @@ def create_college_finder_graph() -> CompiledStateGraph:
         print("Search complete. Cleaning up data next...")
         return "end"
 
-    def call_model(state: CollegeFinderInput) -> CollegeFinderState:
+    def init_agent(state: CollegeFinderInput) -> CollegeFinderState:
+        """Initialize the agent state with default values and input overrides."""
+        print("\nInitializing agent state...")
+        
+        # Initialize with default values
+        initialized_state = {
+            "messages": [],
+            "colleges": [],
+            "recommendations": [],
+            "major": "Any",
+            "location_preference": "Any",
+            "max_tuition": "Not specified",
+            "min_acceptance_rate": "Not specified",
+            "max_colleges": 5,
+            "sat_score": "Not specified",
+            "search_query": ""
+        }
+        
+        # Override defaults with input values if they exist
+        if isinstance(state, dict):
+            for key in initialized_state.keys():
+                if key in state:
+                    initialized_state[key] = state[key]
+        
+        print("State initialized with:")
+        print(f"- Major: {initialized_state['major']}")
+        print(f"- Location: {initialized_state['location_preference']}")
+        print(f"- Max Colleges: {initialized_state['max_colleges']}")
+        
+        return initialized_state
+
+    def call_model(state: CollegeFinderState) -> CollegeFinderState:
         """Call the model to get the next action."""
         print("\nQuerying AI model for next action...")
-        # Initialize messages and colleges if they don't exist
-        messages = state.get("messages", [])
-
-        # Safely access state values with defaults
-        major = "Any"
-        location_preference = "Any"
-        max_tuition = "Not specified"
-        min_acceptance_rate = "Not specified"
-        max_colleges = 5
-        sat_score = "Not specified"
-        search_query = ""
-        colleges = []
-
-        # Override defaults with state values if they exist
-        if isinstance(state, dict):
-            if "major" in state:
-                major = state["major"]
-            if "location_preference" in state:
-                location_preference = state["location_preference"]
-            if "max_tuition" in state:
-                max_tuition = state["max_tuition"]
-            if "min_acceptance_rate" in state:
-                min_acceptance_rate = f"{state['min_acceptance_rate']}%"
-            if "max_colleges" in state:
-                max_colleges = state["max_colleges"]
-            if "sat_score" in state:
-                sat_score = state["sat_score"]
-            if "search_query" in state:
-                search_query = state["search_query"]
-            if "colleges" in state:
-                colleges = state["colleges"]
         
+        # Build context from initialized state
         context = f""" Use your own knowledge and the available tools to search for colleges:
         
         Find the best colleges, not listed below, based on these criteria:
-        - Major: {major}
-        - Location preference: {location_preference}
-        - Maximum tuition: ${max_tuition}
-        - Minimum acceptance rate: {min_acceptance_rate}
-        - Number of colleges needed: {max_colleges}
-        - Sat score average near {sat_score}
-        - {search_query}
+        - Major: {state['major']}
+        - Location preference: {state['location_preference']}
+        - Maximum tuition: ${state['max_tuition']}
+        - Minimum acceptance rate: {state['min_acceptance_rate']}
+        - Number of colleges needed: {state['max_colleges']}
+        - Sat score average near {state['sat_score']}
+        - {state['search_query']}
         
         Currently found colleges(do not include these): 
-        {', '.join(college.name for college in colleges)}
+        {', '.join(college.name for college in state['colleges'])}
         
         First try to answer the question yourself, if you can't, then use the available tools:
         1. ask_llm_for_colleges: Best for finding college names that match the criteria
@@ -153,24 +154,9 @@ def create_college_finder_graph() -> CompiledStateGraph:
         
         # Get model response
         response = model.invoke([HumanMessage(content=context)])
-
-        # Initialize colleges list if it doesn't exist
-        if "colleges" not in state:
-            state["colleges"] = []
-        if "recommendations" not in state:
-            state["recommendations"] = []
         
-        # Update state with new message and input variables
-        return {
-            "messages": [response],
-            "major": major,
-            "location_preference": location_preference,
-            "max_tuition": max_tuition,
-            "min_acceptance_rate": min_acceptance_rate,
-            "max_colleges": max_colleges,
-            "sat_score": sat_score,
-            "search_query": search_query
-        }
+        # Update state with new message while preserving other state values
+        return {**state, "messages": [response]}
 
     def process_tool_results(state: CollegeFinderState) -> CollegeFinderState:
         """Process tool results and extract college information."""
@@ -318,7 +304,7 @@ def create_college_finder_graph() -> CompiledStateGraph:
             elif not updated_college.programs:
                 updated_college.programs = []  # Ensure programs is never None
                
-            #print("Updated college info", updated_college)
+            print("Updated college info", updated_college)
 
             updated_college.has_missing_fields = any([
                     not updated_college.tuition or updated_college.tuition is None,
@@ -408,9 +394,10 @@ def create_college_finder_graph() -> CompiledStateGraph:
         return {**state, "recommendations": response.recommendations, "messages": [AIMessage(content="\n".join(response.recommendations))]}
 
     # Create the graph
-    workflow = StateGraph(CollegeFinderState,input=CollegeFinderInput)
+    workflow = StateGraph(CollegeFinderState, input=CollegeFinderInput)
 
     # Add nodes
+    workflow.add_node("init_agent", init_agent)
     workflow.add_node("agent", call_model)
     workflow.add_node("tools", tool_node)
     workflow.add_node("process_results", process_tool_results)
@@ -418,8 +405,10 @@ def create_college_finder_graph() -> CompiledStateGraph:
     workflow.add_node("data_gathering", data_gathering)
     workflow.add_node("generate_recommendations", generate_recommendations)
     workflow.add_node("debug_state", debug_state)
+
     # Add edges
-    workflow.add_edge(START, "agent")
+    workflow.add_edge(START, "init_agent")
+    workflow.add_edge("init_agent", "agent")
     workflow.add_edge("tools", "process_results")
     workflow.add_edge("process_results", "agent")
     workflow.add_conditional_edges(
