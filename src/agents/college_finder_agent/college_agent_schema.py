@@ -39,7 +39,7 @@ class College(BaseModel):
         description="URL of the college website if available"
     )
     has_missing_fields: bool = False
-    
+
 def colleges_reducer(current: List[College], update: List[College] | None) -> List[College]:
     #print("REDUCER Called")
     if update is None:
@@ -66,7 +66,7 @@ def colleges_reducer(current: List[College], update: List[College] | None) -> Li
 
 
 class CollegeFinderInput(TypedDict):
-    major: str = "any"  # Desired major/field of study
+    major: Optional[str] = "any"  # Desired major/field of study
     location_preference: Optional[str] = "any"  # Preferred location/region
     max_tuition: Optional[int] = None  # Maximum tuition budget
     min_acceptance_rate: Optional[float] = None  # Minimum acceptance rate
@@ -75,12 +75,12 @@ class CollegeFinderInput(TypedDict):
     sat_score: Optional[int] = None  # average SAT score
 
 class CollegeFinderState(TypedDict):
-    major: str  # Desired major/field of study
+    major: Optional[str]  # Desired major/field of study
     location_preference: Optional[str]  # Preferred location/region
     max_tuition: Optional[int] = None  # Maximum tuition budget
     min_acceptance_rate: Optional[float] = None  # Minimum acceptance rate
     max_colleges: int = 5  # Number of colleges to find
-    search_query: str  # Constructed search query
+    search_query: Optional[str] = None  # Constructed search query
     sat_score: Optional[int] = None  # average SAT score
     search_results: Annotated[List[SearchResult], operator.add]  # Search results
     colleges: Annotated[List[College], colleges_reducer]  # Found colleges matching criteria

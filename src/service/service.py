@@ -287,6 +287,7 @@ async def start_agent(
     
     async def run_agent():
         print("RUNNING AGENT")
+        print("KWARGS", kwargs)
         try:
             async for event in agent.astream(**kwargs, stream_mode="values"):
                 agent_state.current_state = event

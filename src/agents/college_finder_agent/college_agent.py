@@ -91,26 +91,54 @@ def create_college_finder_graph() -> CompiledStateGraph:
         print("Search complete. Cleaning up data next...")
         return "end"
 
-    def call_model(state: CollegeFinderState) -> CollegeFinderState:
+    def call_model(state: CollegeFinderInput) -> CollegeFinderState:
         """Call the model to get the next action."""
         print("\nQuerying AI model for next action...")
         # Initialize messages and colleges if they don't exist
         messages = state.get("messages", [])
 
+        # Safely access state values with defaults
+        major = "Any"
+        location_preference = "Any"
+        max_tuition = "Not specified"
+        min_acceptance_rate = "Not specified"
+        max_colleges = 5
+        sat_score = "Not specified"
+        search_query = ""
+        colleges = []
+
+        # Override defaults with state values if they exist
+        if isinstance(state, dict):
+            if "major" in state:
+                major = state["major"]
+            if "location_preference" in state:
+                location_preference = state["location_preference"]
+            if "max_tuition" in state:
+                max_tuition = state["max_tuition"]
+            if "min_acceptance_rate" in state:
+                min_acceptance_rate = f"{state['min_acceptance_rate']}%"
+            if "max_colleges" in state:
+                max_colleges = state["max_colleges"]
+            if "sat_score" in state:
+                sat_score = state["sat_score"]
+            if "search_query" in state:
+                search_query = state["search_query"]
+            if "colleges" in state:
+                colleges = state["colleges"]
         
         context = f""" Use your own knowledge and the available tools to search for colleges:
         
         Find the best colleges, not listed below, based on these criteria:
-        - Major: {state['major']}
-        - Location preference: {state['location_preference'] if state['location_preference'] else 'Any'}
-        - Maximum tuition: ${state.get('max_tuition', 'Not specified')}
-        - Minimum acceptance rate: {state['min_acceptance_rate']}% if specified
-        - Number of colleges needed: {state['max_colleges']}
-        - Sat score average near {state['sat_score']}, if provided
-        - {state['search_query']}
+        - Major: {major}
+        - Location preference: {location_preference}
+        - Maximum tuition: ${max_tuition}
+        - Minimum acceptance rate: {min_acceptance_rate}
+        - Number of colleges needed: {max_colleges}
+        - Sat score average near {sat_score}
+        - {search_query}
         
         Currently found colleges(do not include these): 
-        {', '.join(college.name for college in state.get('colleges', []))}
+        {', '.join(college.name for college in colleges)}
         
         First try to answer the question yourself, if you can't, then use the available tools:
         1. ask_llm_for_colleges: Best for finding college names that match the criteria
@@ -121,13 +149,10 @@ def create_college_finder_graph() -> CompiledStateGraph:
         Start by searching for colleges that match these criteria.  If colleges are missing information like acceptance rate or dorm percentage, use get_web_answer to get more specific information about it like acceptance rate, tuition, dorm percentage, sat scores, etc.
         """
 
-        #print(f"Context: {context}")
         messages = [HumanMessage(content=context)]
         
         # Get model response
         response = model.invoke([HumanMessage(content=context)])
-
-        #print(f"Model response: {response}")
 
         # Initialize colleges list if it doesn't exist
         if "colleges" not in state:
@@ -135,9 +160,17 @@ def create_college_finder_graph() -> CompiledStateGraph:
         if "recommendations" not in state:
             state["recommendations"] = []
         
-        # Update state with new message
-        # new_messages = messages + [response]
-        return {**state, "messages": [response]}
+        # Update state with new message and input variables
+        return {
+            "messages": [response],
+            "major": major,
+            "location_preference": location_preference,
+            "max_tuition": max_tuition,
+            "min_acceptance_rate": min_acceptance_rate,
+            "max_colleges": max_colleges,
+            "sat_score": sat_score,
+            "search_query": search_query
+        }
 
     def process_tool_results(state: CollegeFinderState) -> CollegeFinderState:
         """Process tool results and extract college information."""
