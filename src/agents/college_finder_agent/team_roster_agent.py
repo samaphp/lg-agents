@@ -110,7 +110,7 @@ def create_team_roster_graph():
         print(f"URL: {roster_info.url}")
         
         # Update state with new message
-        return {college_name: college_name, "roster_url": roster_info.url}
+        return {college_name: college_name, "roster_url": roster_info.url, "status_updates": [f"Found roster URL for {college_name}: {roster_info.url}"]}
 
     async def extract_roster(state: TeamRosterState) -> TeamRosterState:
         """Extract roster information from the URL."""
@@ -136,7 +136,7 @@ def create_team_roster_graph():
                 Team
             )
             
-            return {"team": roster}
+            return {"team": roster, "status_updates": [f"Extracted roster of {len(roster.players)} players"]}
             
         except Exception as e:
             print(f"Error extracting roster: {e}")

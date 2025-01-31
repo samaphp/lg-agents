@@ -8,7 +8,7 @@ from core import settings
 
 load_dotenv()
 
-VERSION = "0.0.7"
+VERSION = "0.0.8"
 
 def handle_shutdown(signum, frame):
     print("\nReceived shutdown signal. Exiting gracefully...")

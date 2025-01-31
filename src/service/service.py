@@ -320,15 +320,17 @@ async def get_agent_status(run_id: str) -> dict:
         )
     
     agent_state = running_agents[run_id]
-    print("RETURNINGAGENT STATE", agent_state)
-    return {
+    stateToReturn = {
         "run_id": run_id,
         "thread_id": agent_state.thread_id,
         "status": agent_state.status,
         "start_time": agent_state.start_time,
         "last_update": agent_state.last_update,
-        "current_state": agent_state.current_state
+        "current_state": agent_state.current_state,
+        "status_updates": agent_state.current_state.get("status_updates", [])
     }
+    print("RETURNING AGENT STATE", stateToReturn)
+    return stateToReturn
 
 # This is for browser use logs
 @router.get("/logs")

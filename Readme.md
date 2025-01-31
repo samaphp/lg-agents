@@ -12,7 +12,7 @@ Disclaimer: I'm not an expert at Python or LangGraph, just a developer trying to
 
 ## Motivation
 
-I wanted to create a simple AI agent that uses LangGraph and Browser Use and can be easily deployed. 
+I wanted to create a simple AI agent that uses LangGraph and Browser Use and can be easily deployed as a full stack application.
 
 ## Overview Diagram
 
@@ -22,18 +22,22 @@ Built with [DiagramGPT](https://www.eraser.io/diagramgpt)
 
 ## Client
 
-Part of what I wanted to do is to demonstrate a totally disconnected client that can be used to interact with the agent.  The client project [can be found here](https://github.com/apsquared/lg-agent-client).  This is a generic client that you can cut and paste into your own project.
+Part of what I wanted to do is to demonstrate a totally disconnected client that can be used to interact with the agent.  
+On our website we have a set of agents that demonstrate a [full stack solution with a NextJS application](https://www.apsquared.co/tools).
 
 ## Try Out the Sample Agents 
 
 ### Marketing Agent
 
-The very simple marketing agent can be found [to try on Apquared.co](https://www.apsquared.co/tools/saas-marketing-agent)
+The very simple marketing agent can be found [to try on Apquared.co](https://www.apsquared.co/tools/saas-marketing-agent) and helps businesses build a marketing plan based on their website.
 
 ### College Finder Agent
 
 The college finder agent can be found [to try on Apquared.co](https://www.apsquared.co/tools/college-finder-agent)
 
+### College Baseball Roster Agent
+
+The [college baseball roster agent](https://www.apsquared.co/tools/team-roster-agent) finds the rosters of a college baseball and analyzes the stats about the players to help prospective players see if they are a fit.
 
 ## Settings
 

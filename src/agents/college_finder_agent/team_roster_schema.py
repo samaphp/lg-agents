@@ -27,3 +27,4 @@ class TeamRosterState(TypedDict):
     roster_url: str | None
     team: Team | None
     summary: str | None
+    status_updates: Annotated[List[str], operator.add] = []
