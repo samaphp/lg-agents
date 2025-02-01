@@ -6,7 +6,7 @@ This also uses the great product [Browser Use](https://browseruse.com/) to brows
 
 ## Follow Along
 
-Follow along as I post about program on my [websites](https://apsquared.co), [X account](https://x.com/APSquaredDev) and my Bluesky account [@apsquared](https://bsky.app/profile/apsquared.bsky.social).
+Follow along as I post about program on my [websites](https://www.apsquared.co/posts/full-stack-ai-agents), [X account](https://x.com/APSquaredDev) and my Bluesky account [@apsquared](https://bsky.app/profile/apsquared.bsky.social).
 
 Disclaimer: I'm not an expert at Python or LangGraph, just a developer trying to play with AI Agents and hoping to help others.
 
@@ -23,7 +23,7 @@ Built with [DiagramGPT](https://www.eraser.io/diagramgpt)
 ## Client
 
 Part of what I wanted to do is to demonstrate a totally disconnected client that can be used to interact with the agent.  
-On our website we have a set of agents that demonstrate a [full stack solution with a NextJS application](https://www.apsquared.co/tools).
+On our website we have a set of agents that demonstrate a [full stack solution with a NextJS application](https://www.apsquared.co/tools).  You can also see the [code for the client here](https://github.com/apsquared/ap2-agents).
 
 ## Try Out the Sample Agents 
 
