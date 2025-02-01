@@ -10,6 +10,9 @@ from uuid import UUID, uuid4
 from enum import Enum
 from datetime import datetime
 from fastapi import BackgroundTasks
+from threading import Lock
+from copy import deepcopy
+import time
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, status
 from fastapi.responses import StreamingResponse
@@ -93,7 +96,7 @@ def _parse_input(user_input: UserInput) -> tuple[dict[str, Any], UUID]:
     kwargs = {
         "input": user_input.state if hasattr(user_input, 'state') else {"messages": [HumanMessage(content=user_input.message)]},
         "config": RunnableConfig(
-            configurable={"thread_id": thread_id, "model": user_input.model}, run_id=run_id
+            configurable={"thread_id": thread_id, "model": user_input.model,"max_concurrency": 10}, run_id=run_id
         ),
     }
     return kwargs, run_id
@@ -262,8 +265,9 @@ async def health_check():
     return {"status": "ok"}
 
 
-# Add this after existing global variables
+# Add these after existing imports
 running_agents: Dict[str, AgentState] = {}
+agents_lock = Lock()
 
 # Add these new endpoints
 @router.post("/{agent_id}/start")
@@ -275,62 +279,73 @@ async def start_agent(
     """Start an agent running in the background"""
     agent: CompiledStateGraph = get_agent(agent_id)
     kwargs, run_id = _parse_input(user_input)
-
-    # Extract thread_id from kwargs config
     thread_id = kwargs["config"]["configurable"]["thread_id"]
-    #print("THREAD ID", thread_id)
 
-    # Create new agent state tracker
+    # Create new agent state tracker with thread-safe access
     agent_state = AgentState()
     agent_state.thread_id = thread_id
-    running_agents[str(run_id)] = agent_state
+    
+    with agents_lock:
+        running_agents[str(run_id)] = agent_state
     
     async def run_agent():
-        print("RUNNING AGENT")
-        print("KWARGS", kwargs)
         try:
             async for event in agent.astream(**kwargs, stream_mode="values"):
-                agent_state.current_state = event
-                agent_state.last_update = datetime.utcnow()
-            print("AGENT COMPLETED")
-            agent_state.status = AgentStatus.COMPLETED
+                # Create a new state update
+                with agents_lock:
+                    agent_state.current_state = event
+                    agent_state.last_update = datetime.utcnow()
+            
+            with agents_lock:
+                agent_state.status = AgentStatus.COMPLETED
         except Exception as e:
             logger.error(f"Agent error: {e}\nTraceback: {traceback.format_exc()}")
-            agent_state.status = AgentStatus.ERROR
+            with agents_lock:
+                agent_state.status = AgentStatus.ERROR
     
-    # Add task to background tasks
     background_tasks.add_task(run_agent)
     
     return {
         "run_id": str(run_id),
         "thread_id": thread_id,
-        "status": "started",
-        "message": "Agent started successfully"
+        "status": "started"
     }
 
 @router.get("/agent/{run_id}/status")
 async def get_agent_status(run_id: str) -> dict:
     """Get the current status of a running agent"""
-    print("GETTING AGENT STATUS", run_id)
-    if run_id not in running_agents:
-        print("AGENT STATU NOT FOUND")
-        raise HTTPException(
-            status_code=404,
-            detail="Agent not found. The run_id may be invalid or the agent has completed."
-        )
+    start_time = time.time()
+    print(f"\nStarting get_agent_status for run_id: {run_id}")
     
-    agent_state = running_agents[run_id]
-    stateToReturn = {
+    # Take a quick snapshot of the state with the lock
+    lock_start = time.time()
+    with agents_lock:
+        if run_id not in running_agents:
+            lock_end = time.time()
+            print(f"Lock held for {(lock_end - lock_start)*1000:.2f}ms - Agent not found")
+            raise HTTPException(
+                status_code=404,
+                detail="Agent not found. The run_id may be invalid or the agent has completed."
+            )
+        # Create a deep copy while holding the lock to prevent state changes during read
+        agent_state = deepcopy(running_agents[run_id])
+        lock_end = time.time()
+        print(f"Lock held for {(lock_end - lock_start)*1000:.2f}ms")
+    
+    # Process the copied state without holding the lock
+    process_start = time.time()
+    response = {
         "run_id": run_id,
         "thread_id": agent_state.thread_id,
         "status": agent_state.status,
         "start_time": agent_state.start_time,
         "last_update": agent_state.last_update,
         "current_state": agent_state.current_state,
-        "status_updates": agent_state.current_state.get("status_updates", [])
-    }
-    print("RETURNING AGENT STATE", stateToReturn)
-    return stateToReturn
+        "status_updates": agent_state.current_state.get("status_updates", []) if agent_state.current_state else []
+    }   
+    end_time = time.time()
+    print(f"Total get_agent_status time: {(end_time - start_time)*1000:.2f}ms\n")
+    return response
 
 # This is for browser use logs
 @router.get("/logs")
