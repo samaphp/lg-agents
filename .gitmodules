@@ -1,0 +1,3 @@
+[submodule "src/agents/privateagents"]
+	path = src/agents/privateagents
+	url = https://github.com/apsquared/privateagents.git
