@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 from langgraph.prebuilt import ToolNode
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langchain_core.tools import tool
-from agents.tools.searchweb import search_web_get_answer, search_web_with_query, use_browser, SearchResult
+from agents.tools.searchweb import search_web_get_answer, search_web_with_query, SearchResult
 from agents.tools.wikisearch import search_wikipedia_with_query
 from langgraph.constants import Send
 from operator import add
