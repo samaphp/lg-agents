@@ -13,6 +13,7 @@ from fastapi import BackgroundTasks
 from threading import Lock
 from copy import deepcopy
 import time
+import asyncio
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, status
 from fastapi.responses import StreamingResponse
@@ -290,6 +291,10 @@ async def start_agent(
     
     async def run_agent():
         try:
+            # Create a new event loop for this background task
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            
             async for event in agent.astream(**kwargs, stream_mode="values"):
                 # Create a new state update
                 with agents_lock:
@@ -302,8 +307,11 @@ async def start_agent(
             logger.error(f"Agent error: {e}\nTraceback: {traceback.format_exc()}")
             with agents_lock:
                 agent_state.status = AgentStatus.ERROR
+        finally:
+            loop.close()
     
-    background_tasks.add_task(run_agent)
+    # Run in a separate thread to avoid blocking
+    background_tasks.add_task(asyncio.run, run_agent())
     
     return {
         "run_id": str(run_id),

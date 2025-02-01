@@ -4,6 +4,7 @@ WORKDIR /app
 
 ENV UV_PROJECT_ENVIRONMENT="/usr/local/"
 ENV UV_COMPILE_BYTECODE=1
+ENV MODE=prod
 
 COPY pyproject.toml .
 COPY uv.lock .

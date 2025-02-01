@@ -56,30 +56,24 @@ def search_web_get_answer(query: str)->str:
 
     return answer
 
-def scrape_web(url: str)->str:
-    """ Scrape the web page """
-
+async def scrape_web(url: str) -> str:
+    """Scrape the web page asynchronously"""
     loader = WebBaseLoader(url)
-
-    # Load the page
-    docs = loader.load()
-
-    resultdoc = docs[0]
-    #print(resultdoc.page_content)
-    #print(resultdoc.metadata)
-
-    return resultdoc
+    # Load the page asynchronously
+    docs = []
+    async for doc in loader.alazy_load():
+        docs.append(doc)
+    #print(docs[0].page_content[:100])
+    return docs[0]
 
 async def scrape_web_agent(url: str, query: str, output_model: type[BaseModel]) -> BaseModel:
     llm = get_llm()
-    doc = scrape_web(url)
-    #print(doc.page_content)
+    doc = await scrape_web(url)
     structured_llm = llm.with_structured_output(output_model)
-    result = structured_llm.invoke(
+    result = await structured_llm.ainvoke(
         [query + "\n\n" + doc.page_content],
         config={"temperature": 0.3}
     )
-    #print(result)
     return result
 
 async def use_browser(query: str, output_model: type[BaseModel], max_steps: int = 10) -> BaseModel:

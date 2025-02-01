@@ -158,7 +158,7 @@ def create_marketing_graph() -> CompiledStateGraph:
         results = []
         for search_result in state["search_results"]:
             try:
-                doc = scrape_web(search_result.link)
+                doc = await scrape_web(search_result.link)
                 prompt = f"""Extract the following information from this web page content:
                 - All links to top level domains that appear to be competitors to Product Hunt
                 - For each competitor also map their name and a brief description if available.

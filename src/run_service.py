@@ -8,7 +8,7 @@ from core import settings
 
 load_dotenv()
 
-VERSION = "0.0.8"
+VERSION = "0.0.9"
 
 def handle_shutdown(signum, frame):
     print("\nReceived shutdown signal. Exiting gracefully...")
@@ -25,13 +25,16 @@ if __name__ == "__main__":
     signal.signal(signal.SIGTERM, handle_shutdown)  # Handle termination signal
     
     print(f"RUNNING AGENT SERVICE {VERSION}")
-    
+    print(f"Is Dev Mode: {settings.is_dev()}")
     config = uvicorn.Config(
         "service:app", 
         host=settings.HOST, 
         port=settings.PORT, 
         reload=settings.is_dev(),
-        loop="asyncio"  # Explicitly set the event loop
+        loop="asyncio",  # Explicitly set the event loop
+        workers=4,  # Add multiple workers to handle concurrent requests
+        log_level="debug" if settings.is_dev() else "info",
+        timeout_keep_alive=30,  # Adjust keep-alive timeout
     )
     
     server = uvicorn.Server(config)
