@@ -87,3 +87,4 @@ class CollegeFinderState(TypedDict):
     recommendations: Annotated[List[str], operator.add]  # Specific recommendations for the user
     messages: Annotated[List[BaseMessage], operator.add]  # Messages for ToolNode interaction
     data_gathering_attempts: int = 0  # Counter for data gathering attempts
+    status_updates: Annotated[List[str], operator.add] = []

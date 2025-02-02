@@ -14,6 +14,7 @@ from threading import Lock
 from copy import deepcopy
 import time
 import asyncio
+from asyncio import Lock as AsyncLock
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, status
 from fastapi.responses import StreamingResponse
@@ -268,7 +269,7 @@ async def health_check():
 
 # Add these after existing imports
 running_agents: Dict[str, AgentState] = {}
-agents_lock = Lock()
+agents_lock = AsyncLock()
 
 # Add these new endpoints
 @router.post("/{agent_id}/start")
@@ -282,36 +283,30 @@ async def start_agent(
     kwargs, run_id = _parse_input(user_input)
     thread_id = kwargs["config"]["configurable"]["thread_id"]
 
-    # Create new agent state tracker with thread-safe access
+    # Create new agent state tracker
     agent_state = AgentState()
     agent_state.thread_id = thread_id
     
-    with agents_lock:
+    async with agents_lock:
         running_agents[str(run_id)] = agent_state
     
     async def run_agent():
         try:
-            # Create a new event loop for this background task
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            
             async for event in agent.astream(**kwargs, stream_mode="values"):
                 # Create a new state update
-                with agents_lock:
+                async with agents_lock:
                     agent_state.current_state = event
                     agent_state.last_update = datetime.utcnow()
             
-            with agents_lock:
+            async with agents_lock:
                 agent_state.status = AgentStatus.COMPLETED
         except Exception as e:
             logger.error(f"Agent error: {e}\nTraceback: {traceback.format_exc()}")
-            with agents_lock:
+            async with agents_lock:
                 agent_state.status = AgentStatus.ERROR
-        finally:
-            loop.close()
     
-    # Run in a separate thread to avoid blocking
-    background_tasks.add_task(asyncio.run, run_agent())
+    # Run the agent
+    background_tasks.add_task(run_agent)
     
     return {
         "run_id": str(run_id),
@@ -327,7 +322,7 @@ async def get_agent_status(run_id: str) -> dict:
     
     # Take a quick snapshot of the state with the lock
     lock_start = time.time()
-    with agents_lock:
+    async with agents_lock:
         if run_id not in running_agents:
             lock_end = time.time()
             print(f"Lock held for {(lock_end - lock_start)*1000:.2f}ms - Agent not found")
@@ -350,7 +345,10 @@ async def get_agent_status(run_id: str) -> dict:
         "last_update": agent_state.last_update,
         "current_state": agent_state.current_state,
         "status_updates": agent_state.current_state.get("status_updates", []) if agent_state.current_state else []
-    }   
+    }
+    process_end = time.time()
+    print(f"Response processing took {(process_end - process_start)*1000:.2f}ms")
+    
     end_time = time.time()
     print(f"Total get_agent_status time: {(end_time - start_time)*1000:.2f}ms\n")
     return response

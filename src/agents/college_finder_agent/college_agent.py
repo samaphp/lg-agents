@@ -156,7 +156,7 @@ def create_college_finder_graph() -> CompiledStateGraph:
         response = model.invoke([HumanMessage(content=context)])
         
         # Update state with new message while preserving other state values
-        return {**state, "messages": [response]}
+        return {**state, "messages": [response], "status_updates": ["Asking LLM for colleges..."]}
 
     def process_tool_results(state: CollegeFinderState) -> CollegeFinderState:
         """Process tool results and extract college information."""
@@ -230,7 +230,7 @@ def create_college_finder_graph() -> CompiledStateGraph:
         # Add a message summarizing the findings
         summary = f"Found {len(unique_new_colleges)} new colleges matching your criteria."
         
-        return {**state, "colleges": updated_colleges, "messages": [AIMessage(content=summary, name="process_results")]}
+        return {**state, "colleges": updated_colleges, "messages": [AIMessage(content=summary, name="process_results")], "status_updates": [summary]}
     
     def gather_college_info(state: dict) -> dict:
         """Gather more information about a college."""
@@ -319,6 +319,7 @@ def create_college_finder_graph() -> CompiledStateGraph:
             # Return state with updated college and has_missing_fields flag
             return {
                 "colleges": [updated_college],  # This will be properly merged due to the Annotated[List[College], operator.add]
+                "status_updates": [f"Gathering more information about college {college.name}"]
             }
         
         # If no answer was found, return original college with empty programs list if needed
@@ -338,7 +339,7 @@ def create_college_finder_graph() -> CompiledStateGraph:
     def data_gathering(state: CollegeFinderState):
         # Increment attempt counter
         print(f"Data gathering attempt {state.get('data_gathering_attempts', 0) + 1}")
-        return {"data_gathering_attempts": state.get("data_gathering_attempts", 0) + 1}
+        return {"data_gathering_attempts": state.get("data_gathering_attempts", 0) + 1, "status_updates": ["Gathering more information about colleges..."]}
 
     def debug_state(state: CollegeFinderState):
         print(f"## DEBUG STATE ##")
