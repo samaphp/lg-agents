@@ -1,7 +1,7 @@
-
 from agents.tools.searchweb import scrape_web, search_web_with_query, use_browser
 from crewai.tools import BaseTool
 import asyncio  
+from crew_agents.schemas import HomeMatches
 
 class WebSearchTool(BaseTool):
     name: str ="Web Search Tools"
@@ -18,9 +18,13 @@ class ScrapeWebTool(BaseTool):
         return result
     
 
-class BrowserUseTool(BaseTool):
-    name: str ="Browser Use Tool"
-    description: str = ("Use a browser to search the web and navigate urls to achieve a goal.")
-    def _run(self, goal: str) -> str:
-        result = asyncio.run(use_browser(goal))
+class HomeFinderTool(BaseTool):
+    name: str ="Home Finder Tool"
+    description: str = ("Use a browser to search redfin.com for home listings that match the user's query.")
+    def _run(self, goal: str ) -> str:
+        result = asyncio.run(
+            use_browser(
+                f"""Go to redfin.com and search for homes that match the user's query: {goal}.  
+                Return 3 results per city that most closely match the user's query.  
+                Return the link to the home not the link to the search page.""",HomeMatches,25))
         return result
