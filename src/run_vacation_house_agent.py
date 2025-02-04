@@ -18,7 +18,7 @@ def run_vacation_house_search(query: str) -> str:
 if __name__ == "__main__":
     # Example usage
     load_dotenv()
-    search_query = "in a town similar to Key West but in North Carolina and a price under 850,000 but over 500,000 for single family homes."
+    search_query = "in a town similar to Key West but in North Carolina and a price under 850,000 but over 500,000 for single family homes (no condos)."
     results = run_vacation_house_search(search_query)
     print(f"Search Results: {results}")
 

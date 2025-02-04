@@ -91,7 +91,7 @@ async def use_browser(query: str, output_model: type[BaseModel], max_steps: int 
             llm=llm,
             browser=Browser(
                 config=BrowserConfig(
-                    headless=True,
+                    headless=False,
                     proxy=None,
                 )
             ),
