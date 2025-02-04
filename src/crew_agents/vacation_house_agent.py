@@ -7,7 +7,7 @@ from crewai import Agent, Crew, Task, Process
 
 
 from agents.llmtools import get_llm
-from crew_agents.tools.websearch import ScrapeWebTool, WebSearchTool
+from crew_agents.tools.websearch import BrowserUseTool, ScrapeWebTool, WebSearchTool
 
 
 class VacationHouseAgent():
@@ -16,6 +16,7 @@ class VacationHouseAgent():
         self.llm = get_llm()
         self.web_search_tool = WebSearchTool()
         self.scrape_web_tool = ScrapeWebTool()
+        self.browser_use_tool = BrowserUseTool()
 
     ### AGENTS ###
     def city_reasearcher(self) -> Agent:
@@ -29,7 +30,7 @@ class VacationHouseAgent():
             backstory="""As a City Researcher, you are responsible for aggregating all the researched information
                 into a list.""",
             llm=self.llm,
-            tools=[self.web_search_tool, self.scrape_web_tool],
+            tools=[self.web_search_tool, self.scrape_web_tool, self.browser_use_tool],
             verbose=True,
             allow_delegation=True
         )
@@ -48,7 +49,7 @@ class VacationHouseAgent():
                 - Why it matches the criteria
                 - Approximate price ranges for vacation homes
                 """,
-            tools=[self.web_search_tool],
+            tools=[self.web_search_tool, self.scrape_web_tool, self.browser_use_tool],
             agent=agent
         )
 
