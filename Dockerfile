@@ -16,7 +16,7 @@ RUN pip install playwright && playwright install --with-deps
 COPY .env .
 COPY src/agents/ ./agents/
 COPY src/core/ ./core/
-COPY src/schema/ ./schema/
+COPY src/api_schema/ ./api_schema/
 COPY src/service/ ./service/
 COPY src/run_service.py .
 RUN mkdir logs

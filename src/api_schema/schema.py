@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field, SerializeAsAny
 from typing_extensions import TypedDict
 from pydantic import model_validator
 
-from schema.models import AllModelEnum, AnthropicModelName, OpenAIModelName
+from api_schema.models import AllModelEnum, AnthropicModelName, OpenAIModelName
 
 
 class AgentStatus(str, Enum):

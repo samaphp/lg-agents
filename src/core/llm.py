@@ -8,7 +8,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_groq import ChatGroq
 from langchain_openai import ChatOpenAI
 
-from schema.models import (
+from api_schema.models import (
     AllModelEnum,
     AnthropicModelName,
     AWSModelName,
