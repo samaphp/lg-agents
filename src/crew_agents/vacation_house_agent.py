@@ -1,6 +1,9 @@
 # https://github.com/bhancockio/nextjs-crewai-basic-tutorial/tree/main
 # https://docs.crewai.com/concepts/langchain-tools
 # https://docs.crewai.com/concepts/tools#available-crewai-tools
+# https://crawl4ai.com/mkdocs/
+# https://www.youtube.com/watch?v=Osl4NgAXvRk
+# https://python.langchain.com/docs/integrations/providers/groq/#chat-models
 
 
 from crewai import Agent, Crew, Task, Process
