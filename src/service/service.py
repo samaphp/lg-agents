@@ -26,7 +26,7 @@ from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from langgraph.graph.state import CompiledStateGraph
 from langsmith import Client as LangsmithClient
 
-from agents import DEFAULT_AGENT, get_agent, get_all_agent_info
+from agents import DEFAULT_AGENT, get_agent, get_all_agent_info, all_agents
 from core import settings
 from api_schema import (
     ChatHistory,
@@ -279,18 +279,19 @@ async def start_agent(
     agent_id: str = DEFAULT_AGENT
 ) -> dict:
     """Start an agent running in the background"""
-    agent: CompiledStateGraph = get_agent(agent_id)
+    agent = get_agent(agent_id)
     kwargs, run_id = _parse_input(user_input)
     thread_id = kwargs["config"]["configurable"]["thread_id"]
 
     # Create new agent state tracker
     agent_state = AgentState()
     agent_state.thread_id = thread_id
+    agent_state.status_updates = []
     
     async with agents_lock:
         running_agents[str(run_id)] = agent_state
     
-    async def run_agent():
+    async def run_langgraph_agent():
         try:
             async for event in agent.astream(**kwargs, stream_mode="values"):
                 # Create a new state update
@@ -304,14 +305,56 @@ async def start_agent(
             logger.error(f"Agent error: {e}\nTraceback: {traceback.format_exc()}")
             async with agents_lock:
                 agent_state.status = AgentStatus.ERROR
-    
-    # Run the agent
-    background_tasks.add_task(run_agent)
+
+    async def run_crew_agent():
+        try:
+            def status_callback(task_output: Any) -> None:
+                """Callback for CREW agent task updates"""
+                update = {
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "description": task_output.description if hasattr(task_output, 'description') else str(task_output),
+                    "output": task_output.raw if hasattr(task_output, 'raw') else str(task_output)
+                }
+                
+                # Update agent state with new status
+                asyncio.create_task(update_agent_state(update))
+
+            async def update_agent_state(update: dict):
+                async with agents_lock:
+                    if not hasattr(agent_state, 'status_updates'):
+                        agent_state.status_updates = []
+                    agent_state.status_updates.append(update)
+                    agent_state.last_update = datetime.utcnow()
+
+            # Override the agent's callback
+            for task in agent.create_tasks(user_input.message):
+                task.callback = status_callback
+
+            # Run the agent
+            result = await asyncio.to_thread(agent.run, {"query": user_input.message})
+            
+            async with agents_lock:
+                agent_state.current_state = result
+                agent_state.status = AgentStatus.COMPLETED
+
+        except Exception as e:
+            logger.error(f"Agent error: {e}\nTraceback: {traceback.format_exc()}")
+            async with agents_lock:
+                agent_state.status = AgentStatus.ERROR
+                agent_state.current_state = str(e)
+
+    # Check agent type and run appropriate function
+    agent_type = all_agents[agent_id].type
+    if agent_type == "LANGGRAPH":
+        background_tasks.add_task(run_langgraph_agent)
+    else:  # CREW agent
+        background_tasks.add_task(run_crew_agent)
     
     return {
         "run_id": str(run_id),
         "thread_id": thread_id,
-        "status": "started"
+        "status": "started",
+        "agent_type": agent_type
     }
 
 @router.get("/agent/{run_id}/status")
@@ -344,7 +387,7 @@ async def get_agent_status(run_id: str) -> dict:
         "start_time": agent_state.start_time,
         "last_update": agent_state.last_update,
         "current_state": agent_state.current_state,
-        "status_updates": agent_state.current_state.get("status_updates", []) if agent_state.current_state else []
+        "status_updates": getattr(agent_state, 'status_updates', [])
     }
     process_end = time.time()
     print(f"Response processing took {(process_end - process_start)*1000:.2f}ms")
