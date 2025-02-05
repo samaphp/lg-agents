@@ -10,6 +10,7 @@ from crewai import Agent, Crew, Process, Task
 
 from typing import Any, Dict, List
 from pydantic import BaseModel, Field
+from datetime import datetime
 
 
 from agents.llmtools import get_llm
@@ -31,7 +32,22 @@ class VacationHouseAgent(CrewAgent):
         self.scrape_web_tool = ScrapeWebTool()
         self.home_finder_tool = HomeFinderTool()
         self.distance_tool = DistanceCalculatorTool()
+        self.status_callback = None
 
+    def set_status_callback(self, callback):
+        """Set the callback function for status updates."""
+        self.status_callback = callback
+
+    def append_event_callback(self, event: Any) -> None:
+        """Callback for task events that updates status via the status callback if set."""
+        if self.status_callback:
+            # Create a status update with timestamp and event info
+            update = {
+                "timestamp": datetime.utcnow().isoformat(),
+                "description": event.description if hasattr(event, 'description') else str(event),
+                "output": event.raw if hasattr(event, 'raw') else str(event)
+            }
+            self.status_callback(update)
 
     def create_agents(self) -> List[Agent]:
         """Create and return the list of agents needed for the vacation house search."""
@@ -230,7 +246,9 @@ class VacationHouseAgent(CrewAgent):
             The results from running the crew
         """
         # Process input into a natural language query
-        query = input_data["query"]
+        query = input_data.get("search_query", input_data.get("messages", ""))
+        if isinstance(query, list):
+            query = " ".join(query)
         
         # Create agents and tasks
         agents = self.create_agents()
@@ -245,9 +263,29 @@ class VacationHouseAgent(CrewAgent):
         )
         
         try:
+            if self.status_callback:
+                self.status_callback({
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "description": "Starting vacation house search",
+                    "output": f"Initialized agent with query: {query}"
+                })
+            
             results = crew.kickoff()
-            print("Crew Results: ", results)
+            
+            if self.status_callback:
+                self.status_callback({
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "description": "Completed vacation house search",
+                    "output": results
+                })
+            
             return results
         except Exception as e:
-            print(f"Crew Error: {e}")
-            return f"Error running crew: {str(e)}"
+            error_msg = f"Error running crew: {str(e)}"
+            if self.status_callback:
+                self.status_callback({
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "description": "Error in vacation house search",
+                    "output": error_msg
+                })
+            return error_msg

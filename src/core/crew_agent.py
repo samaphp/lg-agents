@@ -15,15 +15,6 @@ class CrewAgent(ABC):
         """Initialize the agent with a default LLM."""
         pass
     
-    @abstractmethod
-    def create_agents(self) -> List[Agent]:
-        """Create and return a list of agents needed for the crew."""
-        pass
-    
-    @abstractmethod
-    def create_tasks(self, query: str) -> List[Task]:
-        """Create and return a list of tasks for the crew based on the input query."""
-        pass
 
 
     def append_event_callback(self, task_output: Any) -> None:

@@ -12,7 +12,7 @@ def run_vacation_house_search(query: str) -> str:
         str: Results from the crew search
     """
     agent = VacationHouseAgent()
-    results = agent.run({"query": query})
+    results = agent.run({"search_query": query})
     return results
 
 if __name__ == "__main__":

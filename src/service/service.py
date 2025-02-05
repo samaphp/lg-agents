@@ -15,6 +15,7 @@ from copy import deepcopy
 import time
 import asyncio
 from asyncio import Lock as AsyncLock
+from concurrent.futures import ThreadPoolExecutor
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, status
 from fastapi.responses import StreamingResponse
@@ -308,34 +309,80 @@ async def start_agent(
 
     async def run_crew_agent():
         try:
-            def status_callback(task_output: Any) -> None:
-                """Callback for CREW agent task updates"""
-                update = {
-                    "timestamp": datetime.utcnow().isoformat(),
-                    "description": task_output.description if hasattr(task_output, 'description') else str(task_output),
-                    "output": task_output.raw if hasattr(task_output, 'raw') else str(task_output)
-                }
-                
-                # Update agent state with new status
-                asyncio.create_task(update_agent_state(update))
-
-            async def update_agent_state(update: dict):
-                async with agents_lock:
-                    if not hasattr(agent_state, 'status_updates'):
-                        agent_state.status_updates = []
-                    agent_state.status_updates.append(update)
-                    agent_state.last_update = datetime.utcnow()
-
-            # Override the agent's callback
-            for task in agent.create_tasks(user_input.message):
-                task.callback = status_callback
-
-            # Run the agent
-            result = await asyncio.to_thread(agent.run, {"query": user_input.message})
+            # Use asyncio.Queue instead of threading.Queue for async safety
+            status_queue = asyncio.Queue()
+            should_stop = False
+            # Get the event loop at the start
+            loop = asyncio.get_running_loop()
             
-            async with agents_lock:
-                agent_state.current_state = result
-                agent_state.status = AgentStatus.COMPLETED
+            async def process_status_updates():
+                """Process status updates from the queue"""
+                try:
+                    while not should_stop:
+                        try:
+                            # Use asyncio.wait_for instead of timeout
+                            update = await asyncio.wait_for(status_queue.get(), timeout=0.1)
+                            async with agents_lock:
+                                if not hasattr(agent_state, 'status_updates'):
+                                    agent_state.status_updates = []
+                                agent_state.status_updates.append(update)
+                                agent_state.last_update = datetime.utcnow()
+                                if 'output' in update:
+                                    agent_state.current_state = update['output']
+                            status_queue.task_done()
+                        except asyncio.TimeoutError:
+                            continue
+                        except Exception as e:
+                            logger.error(f"Error processing status update: {e}")
+                except asyncio.CancelledError:
+                    logger.info("Status update processor cancelled")
+                    return
+
+            # Create a closure that captures the loop
+            def status_callback(update: dict) -> None:
+                """Thread-safe callback that puts updates into the queue"""
+                future = asyncio.run_coroutine_threadsafe(
+                    status_queue.put(update), 
+                    loop
+                )
+                try:
+                    # Wait for a short timeout to catch any immediate errors
+                    future.result(timeout=1.0)
+                except Exception as e:
+                    logger.error(f"Error in status callback: {e}")
+
+            # Start the status update processor
+            processor_task = asyncio.create_task(process_status_updates())
+            
+            # Get input data from the UserInput
+            input_data = {}
+            if hasattr(user_input, 'state') and user_input.state:
+                input_data = user_input.state
+            elif hasattr(user_input, 'message') and user_input.message:
+                input_data = {"messages": user_input.message}
+            else:
+                input_data = kwargs.get("input", {})
+
+            # Set up the status callback on the agent if it supports it
+            if hasattr(agent, 'set_status_callback'):
+                agent.set_status_callback(status_callback)
+
+            try:
+                # Run the agent with proper thread pool executor
+                with ThreadPoolExecutor() as pool:
+                    result = await loop.run_in_executor(pool, agent.run, input_data)
+                
+                async with agents_lock:
+                    agent_state.current_state = result
+                    agent_state.status = AgentStatus.COMPLETED
+            finally:
+                # Cancel and wait for the processor task
+                should_stop = True
+                processor_task.cancel()
+                try:
+                    await processor_task
+                except asyncio.CancelledError:
+                    pass
 
         except Exception as e:
             logger.error(f"Agent error: {e}\nTraceback: {traceback.format_exc()}")
@@ -368,6 +415,7 @@ async def get_agent_status(run_id: str) -> dict:
     async with agents_lock:
         if run_id not in running_agents:
             lock_end = time.time()
+            print(f"Running agents keys: {list(running_agents.keys())}")
             print(f"Lock held for {(lock_end - lock_start)*1000:.2f}ms - Agent not found")
             raise HTTPException(
                 status_code=404,
