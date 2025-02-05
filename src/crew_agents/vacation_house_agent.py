@@ -6,37 +6,62 @@
 # https://python.langchain.com/docs/integrations/providers/groq/#chat-models
 
 
-from crewai import Agent, Crew, Task, Process
+from crewai import Agent, Crew, Process, Task
 
-from typing import List
-from pydantic import BaseModel
+from typing import Any, Dict, List
+from pydantic import BaseModel, Field
+
 
 from agents.llmtools import get_llm
+from core.crew_agent import CrewAgent
 from crew_agents.tools.distancetool import DistanceCalculatorTool
-from crew_agents.tools.websearch import  ScrapeWebTool, WebSearchTool, HomeFinderTool
+from crew_agents.tools.websearch import ScrapeWebTool, WebSearchTool, HomeFinderTool
 from crew_agents.schemas import CityInfo, VacationHomes, CandidateCities, HomeMatches
+
 
 CITY_LIMIT = 1
 HOME_LIMIT = 2
 
-class VacationHouseAgent():
+class VacationHouseAgent(CrewAgent):
      
     def __init__(self):
+        super().__init__()
         self.llm = get_llm()
         self.web_search_tool = WebSearchTool()
         self.scrape_web_tool = ScrapeWebTool()
         self.home_finder_tool = HomeFinderTool()
         self.distance_tool = DistanceCalculatorTool()
 
-    def append_event_callback(self, task_output):
-        print("##########################")
-        print("### Callback called: ", task_output.description)
-        print("### Callback output: ", task_output.raw)
-        print("##########################")
-        #append_event(self.job_id, task_output.exported_output)
 
-    ### AGENTS ###
-    def city_reasearcher(self) -> Agent:
+    def create_agents(self) -> List[Agent]:
+        """Create and return the list of agents needed for the vacation house search."""
+        return [
+            self.city_researcher(),
+            self.real_estate_agent(),
+            self.local_expert()
+        ]
+
+    def create_tasks(self, query: str) -> List[Task]:
+        """Create and return the list of tasks for the vacation house search."""
+        city_researcher = self.city_researcher()
+        real_estate_agent = self.real_estate_agent()
+        local_expert = self.local_expert()
+
+        city_research_task = self.find_candidate_cities_task(city_researcher, query)
+        real_estate_task = self.find_vacation_homes_task(real_estate_agent, query, city_research_task)
+        verify_listings_task = self.verify_listings(real_estate_agent, real_estate_task)
+        local_business_task = self.find_local_businesses_task(local_expert, verify_listings_task)
+        summarize_task = self.summarize_task(city_researcher, query, [city_research_task, verify_listings_task, local_business_task])
+
+        return [
+            city_research_task,
+            real_estate_task,
+            verify_listings_task,
+            local_business_task,
+            summarize_task
+        ]
+
+    def city_researcher(self) -> Agent:
         return Agent(
             role="City Researcher",
             goal=f"""
@@ -84,7 +109,6 @@ class VacationHouseAgent():
             allow_delegation=False
         )
     
-    ### TASKS ###
     def find_candidate_cities_task(self, agent: Agent, query: str) -> Task:
         return Task(
             description=f"""
@@ -194,31 +218,32 @@ class VacationHouseAgent():
             agent=agent,
             callback=self.append_event_callback
         )
-    
-    def create_crew(self, query: str) -> Crew:
-        #AGENTS
-        city_researcher = self.city_reasearcher()
-        real_estate_agent = self.real_estate_agent()
-        local_expert = self.local_expert()
 
-        #TASKS
-        city_research_task = self.find_candidate_cities_task(city_researcher, query)
-        real_estate_task = self.find_vacation_homes_task(real_estate_agent, query, city_research_task)
-        verify_listings_task = self.verify_listings(real_estate_agent, real_estate_task)
-        local_business_task = self.find_local_businesses_task(local_expert, verify_listings_task)
-        summarize_task = self.summarize_task(city_researcher, query, [city_research_task, verify_listings_task, local_business_task])
-
-
+    def run(self, input_data: Dict[str, Any]) -> str:
+        """
+        Run the vacation house search crew with the given input parameters.
+        
+        Args:
+            input_data: Dictionary containing vacation house search parameters
+            
+        Returns:
+            The results from running the crew
+        """
+        # Process input into a natural language query
+        query = input_data["query"]
+        
+        # Create agents and tasks
+        agents = self.create_agents()
+        tasks = self.create_tasks(query)
+        
+        # Create and run the crew
         crew = Crew(
-            agents=[city_researcher, real_estate_agent],
-            tasks=[city_research_task, real_estate_task,verify_listings_task,local_business_task,summarize_task],
+            agents=agents,
+            tasks=tasks,
             verbose=True,
             process=Process.sequential
         )
-        return crew
-    
-    def run_crew(self, query: str) -> str:
-        crew = self.create_crew(query)
+        
         try:
             results = crew.kickoff()
             print("Crew Results: ", results)
