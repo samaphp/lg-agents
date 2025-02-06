@@ -17,10 +17,10 @@ from agents.llmtools import get_llm
 from core.crew_agent import CrewAgent
 from crew_agents.tools.distancetool import DistanceCalculatorTool
 from crew_agents.tools.websearch import ScrapeWebTool, WebSearchTool, HomeFinderTool
-from crew_agents.schemas import CityInfo, VacationHomes, CandidateCities, HomeMatches
+from crew_agents.schemas import CityInfo, ResultSummary, VacationHomes, CandidateCities, HomeMatches
 
 
-CITY_LIMIT = 1
+CITY_LIMIT = 2
 HOME_LIMIT = 2
 
 class VacationHouseAgent(CrewAgent):
@@ -133,7 +133,7 @@ class VacationHouseAgent(CrewAgent):
                 For each city research if there are short term rental restrictions and describe them briefly.
                 Double check that the criteria in the query is met and the best fit cities are returned.
                 Use both your knowledge and the web search tool to find and verify cities.
-                Return at most {CITY_LIMIT} cities.
+                Return at most {CITY_LIMIT} cities (or just 1 if an exact city was specified in the query).
                 """,
             expected_output="""
                 A JSON array of cities that match the user's query for vacation houses.
@@ -143,7 +143,7 @@ class VacationHouseAgent(CrewAgent):
                 - Approximate price ranges for vacation homes
                 - Short term rental restrictions (if any)
                 """,
-            output_json_schema=CandidateCities.model_json_schema(),
+            output_json=CandidateCities,
             agent=agent,
             callback=self.append_event_callback,
             tools=[self.web_search_tool, self.scrape_web_tool]
@@ -156,8 +156,8 @@ class VacationHouseAgent(CrewAgent):
                 Perform each city search separately and only once.  Return {HOME_LIMIT} results per city.
                 When searching use filters to narrow down the results.
                 If you cannot return results for a given city, return an empty list.
-                If a price is given try to find houses near that price, not exactly that price (but also not too far away).
-                Avoid zillow.com links.
+                If a price is given try to find houses near that price, not exactly that price.
+                Avoid zillow.com links, use sites like redfin.com or realtor.com.  
                 """,
             expected_output="""
                 A JSON array of homes that match the user's query.
@@ -167,7 +167,7 @@ class VacationHouseAgent(CrewAgent):
                 - Price
                 - Link to the home
                 """,
-            output_json_schema=HomeMatches.model_json_schema(),
+            output_json=CandidateCities,
             context=[task],
             agent=agent,
             callback=self.append_event_callback,
@@ -180,11 +180,12 @@ class VacationHouseAgent(CrewAgent):
                 Verify the listings found in the homes_task are within the user's budget and have correct links.
                 Verify links by opening the page and verifying the link is to the same address.  If it is not search for the address and try to find the correct link.
                 The link should be to a for sale page for the property.
+                Remove any listings using zillow.com links. Try to make links direct to the listing not a search results page if possible.
                 """,
             expected_output="""
-                A JSON array of homes that match the user's query and have correct links.
+                An updated JSON array of candidate cities with the homes that match the user's query and have correct links.
                 """,
-            output_json_schema=HomeMatches.model_json_schema(),
+            output_json=CandidateCities,
             context=[homes_task],
             agent=agent,
             callback=self.append_event_callback,
@@ -196,15 +197,16 @@ class VacationHouseAgent(CrewAgent):
             description=f"""
                 Find the best local businesses for the user based on the location of the homes they are interested in.
                 For each home find the best bars and restaurants and coffee shops in the shortest distance to the homes address.
+                Collect the full postal address of the business for distance calculations.
                 """,
             expected_output="""
-                Updated JSON array of home matches with the business information added.  The business information should include:
+                Updated JSON array of ccities with the business information added to each home.  The business information should include:
                 - Name
-                - Address
+                - Postal address
                 - Type of business
                 - Distance from home specified in miles
                 """,
-            output_json_schema=HomeMatches.model_json_schema(),
+            output_json=CandidateCities,
             context=[listings_task],
             agent=agent,
             callback=self.append_event_callback,
@@ -214,9 +216,8 @@ class VacationHouseAgent(CrewAgent):
     def summarize_task(self, agent: Agent, query: str, tasks: List[Task]) -> Task:
         return Task(
             description=f"""
-                Analyze the results from the city research and home search tasks to create a summary for the user.
-                Original query: {query}
-                
+                Analyze the results from the context to create a summary for the user based on the query: {query}
+   
                 Focus on:
                 - How well the found cities match the user's requirements
                 - The range and suitability of vacation homes found
@@ -224,13 +225,14 @@ class VacationHouseAgent(CrewAgent):
                 - The local businesses found for each house
                 """,
             expected_output="""
-                A clear, concise summary of the vacation home search results that helps the user understand:
-                - Which cities were identified and why they're good matches
-                - The types and prices of homes found with links to the homes
-                - Any recommendations or notable observations
-                - The local businesses found for each house
+                A JSON object following the supplied schema:
+                - summary: A clear, concise summary of the vacation home search results that helps the user understand:
+                - candidate_cities: Which cities were identified and why they're good matches
+                - home_matches: The types and prices of homes found with links to the homes
+                - With the home_matches list The local businesses found for each house including their distance if available
                 """,
             context=tasks,
+            output_json=ResultSummary,
             agent=agent,
             callback=self.append_event_callback
         )
@@ -271,7 +273,7 @@ class VacationHouseAgent(CrewAgent):
                 })
             
             results = crew.kickoff()
-            
+            # print(f"###Results: {results}")
             if self.status_callback:
                 self.status_callback({
                     "timestamp": datetime.utcnow().isoformat(),
