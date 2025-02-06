@@ -17,7 +17,7 @@ from agents.llmtools import get_llm
 from core.crew_agent import CrewAgent
 from crew_agents.tools.distancetool import DistanceCalculatorTool
 from crew_agents.tools.websearch import ScrapeWebTool, WebSearchTool, HomeFinderTool
-from crew_agents.schemas import CityInfo, ResultSummary, VacationHomes, CandidateCities, HomeMatches
+from crew_agents.vacation_house_agent.schemas import CityInfo, ResultSummary, VacationHomes, CandidateCities, HomeMatches
 
 
 CITY_LIMIT = 2

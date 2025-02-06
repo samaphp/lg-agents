@@ -1,7 +1,7 @@
 from agents.tools.searchweb import scrape_web, search_web_with_query, use_browser
 from crewai.tools import BaseTool
 import asyncio  
-from crew_agents.schemas import HomeMatches
+from crew_agents.vacation_house_agent.schemas import HomeMatches
 
 class WebSearchTool(BaseTool):
     name: str ="Web Search Tools"
