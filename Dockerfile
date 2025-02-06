@@ -9,17 +9,16 @@ ENV MODE=prod
 COPY pyproject.toml .
 COPY uv.lock .
 RUN pip install --no-cache-dir uv
-RUN uv sync --frozen --no-install-project --no-dev
+RUN uv pip install --system -e .
 RUN pip install playwright && playwright install --with-deps
-
 
 COPY .env .
 COPY src/agents/ ./agents/
 COPY src/core/ ./core/
+COPY src/crew_agents/ ./crew_agents/
 COPY src/api_schema/ ./api_schema/
 COPY src/service/ ./service/
 COPY src/run_service.py .
 RUN mkdir logs
-
 
 CMD ["python", "run_service.py"]
