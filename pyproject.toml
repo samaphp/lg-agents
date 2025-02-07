@@ -45,6 +45,7 @@ dependencies = [
     "beautifulsoup4",
     "wikipedia>=1.4.0",
     "requests",
+    "tweepy>=4.14.0",
 ]
 
 [dependency-groups]

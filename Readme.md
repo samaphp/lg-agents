@@ -39,6 +39,11 @@ The college finder agent can be found [to try on Apquared.co](https://www.apsqua
 
 The [college baseball roster agent](https://www.apsquared.co/tools/team-roster-agent) finds the rosters of a college baseball and analyzes the stats about the players to help prospective players see if they are a fit.
 
+### Vacation House Agent
+
+The [vacation house agent](https://www.apsquared.co/tools/vacation-house-agent) helps find vacation houses based on the user's query.
+This agent uses the [crewai](https://crewai.com/) framework to create the agent.
+
 ## Settings
 
 Updates settings .in .env and settings.py file (in core)
@@ -87,7 +92,13 @@ To add a new agent to the system, follow these steps:
 * https://github.com/dendrite-systems/dendrite-python-sdk
 * https://simplescraper.io/docs/api-guide
 * https://langchain-ai.github.io/langgraph/concepts/low_level/
+* https://app.composio.dev/sdk_guide
 
+## Adding new packages
+
+`uv pip add <package-name>`
+`uv pip compile pyproject.toml -o uv.lock --refresh`
+`uv pip sync uv.lock`
 
 
 ## DEPLOAY agent to ECS
