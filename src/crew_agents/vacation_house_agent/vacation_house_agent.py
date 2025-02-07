@@ -13,15 +13,15 @@ from pydantic import BaseModel, Field
 from datetime import datetime
 
 
-from agents.llmtools import get_llm
+from agents.llmtools import get_groq_llm, get_llm
 from core.crew_agent import CrewAgent
 from crew_agents.tools.distancetool import DistanceCalculatorTool
 from crew_agents.tools.websearch import ScrapeWebTool, WebSearchTool, HomeFinderTool
 from crew_agents.vacation_house_agent.schemas import CityInfo, ResultSummary, VacationHomes, CandidateCities, HomeMatches
+from crew_agents.tools.deepseek import DeepSeekTool
 
-
-CITY_LIMIT = 2
-HOME_LIMIT = 2
+CITY_LIMIT = 3
+HOME_LIMIT = 3
 
 class VacationHouseAgent(CrewAgent):
      
@@ -32,6 +32,7 @@ class VacationHouseAgent(CrewAgent):
         self.scrape_web_tool = ScrapeWebTool()
         self.home_finder_tool = HomeFinderTool()
         self.distance_tool = DistanceCalculatorTool()
+        self.deepseek_tool = DeepSeekTool()
         self.status_callback = None
 
     def set_status_callback(self, callback):
@@ -90,7 +91,7 @@ class VacationHouseAgent(CrewAgent):
             backstory="""As a City Researcher, you are responsible for aggregating all the researched information
                 into a list.""",
             llm=self.llm,
-            tools=[self.web_search_tool, self.scrape_web_tool],
+            tools=[self.deepseek_tool, self.web_search_tool, self.scrape_web_tool],
             verbose=True,
             allow_delegation=False
         )
@@ -130,6 +131,8 @@ class VacationHouseAgent(CrewAgent):
             description=f"""
                 Compile a list of cities that match the user's query for vacation houses: {query}
                 Try to use multiple sources to find the cities that match.
+                First try to learn about cities from Deepseek.
+                Then use the web search tool to find more information about the cities.
                 For each city research if there are short term rental restrictions and describe them briefly.
                 Double check that the criteria in the query is met and the best fit cities are returned.
                 Use both your knowledge and the web search tool to find and verify cities.
@@ -146,7 +149,7 @@ class VacationHouseAgent(CrewAgent):
             output_json=CandidateCities,
             agent=agent,
             callback=self.append_event_callback,
-            tools=[self.web_search_tool, self.scrape_web_tool]
+            tools=[self.deepseek_tool,self.web_search_tool, self.scrape_web_tool]
         )
     
     def find_vacation_homes_task(self, agent: Agent, query: str, task: Task) -> Task:
