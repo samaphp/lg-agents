@@ -1,6 +1,6 @@
-# Sample AI Agent using LangGraph
+# Sample AI Agent using LangGraph and CrewAI
 
-This work is based on [this repo](https://github.com/JoshuaC215/agent-service-toolkit) which was created by [JoshuaC215](https://github.com/JoshuaC215).  Thanks! 
+This work is originallybased on [this repo](https://github.com/JoshuaC215/agent-service-toolkit) which was created by [JoshuaC215](https://github.com/JoshuaC215).  Thanks! 
 
 This also uses the great product [Browser Use](https://browseruse.com/) to browse the web.
 
@@ -13,6 +13,7 @@ Disclaimer: I'm not an expert at Python or LangGraph, just a developer trying to
 ## Motivation
 
 I wanted to create a simple AI agent that uses LangGraph and Browser Use and can be easily deployed as a full stack application.
+I've also been playing with [CrewAI](https://crewai.com/) and wanted to see how to integrate it with LangGraph.
 
 ## Overview Diagram
 
