@@ -373,6 +373,7 @@ async def start_agent(
                     result = await loop.run_in_executor(pool, agent.run, input_data)
                 
                 async with agents_lock:
+                    # Store the raw result as the current state
                     agent_state.current_state = result
                     agent_state.status = AgentStatus.COMPLETED
             finally:

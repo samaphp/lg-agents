@@ -34,7 +34,7 @@ all_agents: dict[str, Agent] = {
    "college-agent": Agent(description="A college agent.", graph=college_finder_agent, type="LANGGRAPH"),
    "team-roster-agent": Agent(description="A team roster agent.", graph=team_roster_agent, type="LANGGRAPH"),
    "vacation-house-agent": Agent(description="An agent to help find vacation houses.", graph=get_vacation_house_agent(), type="CREW"),
-   ## Private Agents
+   ## Private Agents comment out when not in use
    "bargpt-trending-agent": Agent(description="An agent to help find trending topics.", graph=get_bargpt_trending_agent(), type="CREW"),
 }
 
