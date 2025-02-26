@@ -12,7 +12,7 @@ class WebSearchTool(BaseTool):
     
 class ScrapeWebTool(BaseTool):
     name: str ="Scrape Web Tool"
-    description: str = ("Scrape a web page and return the text.")
+    description: str = ("Scrape a web page and return the text so you can extract information from it.")
     def _run(self, url: str) -> str:
         result = asyncio.run(scrape_web(url))
         return result

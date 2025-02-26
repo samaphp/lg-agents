@@ -2,6 +2,8 @@ from dotenv import load_dotenv
 import logging
 from typing import Dict, Any
 
+from agents.privateagents.private.bargpt_agent.crews.bargpt_research_agent import ResearchAgent
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -17,9 +19,12 @@ def run_trending_flow() -> Dict[str, Any]:
     """
     try:
         logger.info("Starting BarGPT trending post flow...")
-        flow = BarGPTTrendingPostFlow()
-        result = flow.run({})
-        logger.info(f"Flow completed successfully: {result}")
+        #flow = BarGPTTrendingPostFlow()
+        #result = flow.run({})
+        #logger.info(f"Flow completed successfully: {result}")
+        research_agent = ResearchAgent()
+        result = research_agent.run({"request": "What are the latest trending topics?", "recent_topics": ['old topic 1', 'old topic 2']})
+      
         return result
     except Exception as e:
         logger.error(f"Error running trending flow: {e}")
