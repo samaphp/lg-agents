@@ -1,4 +1,4 @@
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, Type
 import requests
 from bs4 import BeautifulSoup
 from crewai.tools import BaseTool
@@ -16,11 +16,15 @@ class OpenGraphData(BaseModel):
     locale: Optional[str] = Field(None, description="The locale of the content")
     additional_properties: Dict[str, str] = Field(default_factory=dict, description="Additional Open Graph properties")
 
+class OpenGraphToolSchema(BaseModel):
+    """Input for OpenGraphTool."""
+    url: str = Field(..., description="The required URL to extract Open Graph metadata from")
 
 class OpenGraphTool(BaseTool):
     """Tool for extracting Open Graph metadata from a URL."""
     name: str = "Open Graph Extractor"
-    description: str = "Extract Open Graph metadata from a URL to get title, description, images, and other metadata."
+    description: str = "Extract Open Graph metadata from a URL to get title, description, images, and other metadata. Especially useful for getting the primay image for a page."
+    args_schema: Type[BaseModel] = OpenGraphToolSchema
     
     def _run(self, url: str) -> str:
         """

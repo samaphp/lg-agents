@@ -18,7 +18,7 @@ def run_thc_agent() -> Dict[str, Any]:
     try:
         logger.info("Starting THC research flow...")
         flow = THCResearchFlowAgent()
-        result = flow.run({"existing_companies": ["Crescent Canna"]})
+        result = flow.run({"action": "find_company_details"})
         logger.info(f"Flow completed successfully: {result}")
         return result
     except Exception as e:
