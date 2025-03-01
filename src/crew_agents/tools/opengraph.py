@@ -25,7 +25,7 @@ class OpenGraphTool(BaseTool):
     name: str = "Open Graph Extractor"
     description: str = "Extract Open Graph metadata from a URL to get title, description, images, and other metadata. Especially useful for getting the primay image for a page."
     args_schema: Type[BaseModel] = OpenGraphToolSchema
-    
+
     def _run(self, url: str) -> str:
         """
         Extract Open Graph metadata from the provided URL.
@@ -39,7 +39,12 @@ class OpenGraphTool(BaseTool):
         try:
             # Send a GET request to the URL
             headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+                "Accept-Language": "en-US,en;q=0.9",
+                "Referer": "https://www.google.com/",
+                "Connection": "keep-alive",
+                "Upgrade-Insecure-Requests": "1"       
             }
             response = requests.get(url, headers=headers, timeout=10)
             response.raise_for_status()

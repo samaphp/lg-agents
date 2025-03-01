@@ -20,7 +20,7 @@ __pycache__/
 
 logs/
 db/
-
+agent_output/
 # Distribution / packaging
 .Python
 build/
