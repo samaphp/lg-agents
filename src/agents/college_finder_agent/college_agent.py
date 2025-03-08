@@ -444,9 +444,9 @@ def create_college_finder_graph() -> CompiledStateGraph:
     graph = workflow.compile(checkpointer=MemorySaver())
     
     # Save graph visualization to disk and display it
-    graph_image = graph.get_graph(xray=True).draw_mermaid_png()
-    with open("college_finder_graph.png", "wb") as f:
-        f.write(graph_image)
+    #graph_image = graph.get_graph(xray=True).draw_mermaid_png()
+    #with open("college_finder_graph.png", "wb") as f:
+    #    f.write(graph_image)
     
     # Optionally still display in notebook
     # display(Image(graph_image))
