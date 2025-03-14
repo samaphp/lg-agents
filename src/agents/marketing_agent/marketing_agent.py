@@ -65,9 +65,10 @@ def create_marketing_graph() -> CompiledStateGraph:
         response = structured_llm.invoke(prompt)
         
         # Take only up to max_personas
-        #state["personas"] = response.personas[:state['max_personas']]
-        #print("ANALYSTS", state["personas"])
-        return {"personas": response.personas[:state['max_personas']]}
+        max_personas = int(state['max_personas'])  # Ensure integer type
+        #print("max_personas ", max_personas)
+        #print("len personas ", len(response.personas))
+        return {"personas": response.personas[:max_personas]}
     
     async def search_web_for_competitors(state: workflow_state):
         results = search_web(f"Find website with a similar value proposition: {state['value_proposition']}")
@@ -87,7 +88,6 @@ def create_marketing_graph() -> CompiledStateGraph:
         url = state["appUrl"]
         print("ANALYZING SITE", url)
         final_result = await scrape_web_agent(url,
-            f"Analyze this website and extract the following information in a structured way: \n"
             f"- App name\n"
             f"- Description\n"
             f"- Key features (as a list)\n"

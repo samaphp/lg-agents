@@ -61,7 +61,7 @@ async def scrape_web(url: str) -> str:
     loader = WebBaseLoader(url)
     # Load the page asynchronously
     docs = []
-    async for doc in loader.lazy_load():
+    async for doc in loader.alazy_load():
         docs.append(doc)
     #print(docs[0].page_content[:100])
     return docs[0]
