@@ -30,16 +30,31 @@ class SitemapTool(BaseTool):
         """
         try:
             headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-                "Accept": "text/html,application/xml",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+                "Accept": "text/html,application/xml,application/xhtml+xml,application/rss+xml,application/atom+xml,*/*;q=0.9",
+                "Accept-Language": "en-US,en;q=0.9",
+                "Connection": "keep-alive",
+                "Upgrade-Insecure-Requests": "1",
+                "Sec-Fetch-Dest": "document",
+                "Sec-Fetch-Mode": "navigate",
+                "Sec-Fetch-Site": "none",
+                "Sec-Fetch-User": "?1",
+                "Cache-Control": "max-age=0",
+                "DNT": "1",
             }
-            response = requests.get(url, headers=headers, timeout=10)
+            
+            # Use a session to handle cookies and redirects properly
+            session = requests.Session()
+            response = session.get(url, headers=headers, timeout=10, allow_redirects=True)
             response.raise_for_status()
+
+            #print(f"Response content: {response.content}")
             
             soup = BeautifulSoup(response.content, "xml")
             
             # Handle sitemap index files
             sitemaps = soup.find_all("sitemap")
+            #print(f"Sitemaps: {sitemaps}")
             if sitemaps:
                 for sitemap in sitemaps:
                     loc = sitemap.find("loc")
@@ -54,6 +69,7 @@ class SitemapTool(BaseTool):
                     sitemap_data.urls.append(loc.text)
                     
         except Exception as e:
+            print(f"Error processing sitemap {url}: {str(e)}")
             sitemap_data.errors.append(f"Error processing sitemap {url}: {str(e)}")
 
     def _run(self, url: str) -> str:

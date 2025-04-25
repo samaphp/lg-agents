@@ -198,9 +198,9 @@ def create_team_roster_graph():
     graph = workflow.compile()
 
     # Save graph visualization to disk and display it
-    graph_image = graph.get_graph(xray=True).draw_mermaid_png()
-    with open("roster_graph.png", "wb") as f:
-        f.write(graph_image)
+    #graph_image = graph.get_graph(xray=True).draw_mermaid_png()
+   # with open("roster_graph.png", "wb") as f:
+   #     f.write(graph_image)
 
     # Compile
     return graph
