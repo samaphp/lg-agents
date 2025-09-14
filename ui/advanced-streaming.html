@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marketing Agent - Live Streaming Analysis</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f0f1e;
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        /* Animated background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #1a1a2e);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            z-index: -1;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: slideDown 0.5s ease-out;
+        }
+        
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .header h1 {
+            font-size: 42px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #a0a0a0;
+            font-size: 18px;
+        }
+        
+        .main-grid {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 30px;
+            animation: fadeIn 0.7s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        /* Input Panel */
+        .input-panel {
+            background: rgba(30, 30, 45, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #a0a0a0;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            color: #e0e0e0;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.08);
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        input::placeholder {
+            color: #606060;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        button:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+        
+        .btn-stream {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-normal {
+            background: rgba(255, 255, 255, 0.1);
+            color: #e0e0e0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Stream Display */
+        .stream-panel {
+            background: rgba(30, 30, 45, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            min-height: 600px;
+            position: relative;
+        }
+        
+        .stream-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .stream-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #606060;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-dot.active {
+            background: #00ff00;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .stream-content {
+            color: #e0e0e0;
+        }
+        
+        /* Animated sections */
+        .content-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            animation: slideIn 0.5s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        @keyframes slideIn {
+            from { 
+                opacity: 0; 
+                transform: translateX(-20px);
+            }
+            to { 
+                opacity: 1; 
+                transform: translateX(0);
+            }
+        }
+        
+        .content-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #667eea, transparent);
+            animation: scan 2s linear infinite;
+        }
+        
+        @keyframes scan {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+        
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #667eea;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section-icon {
+            font-size: 24px;
+        }
+        
+        /* Persona cards with animation */
+        .persona-card {
+            background: rgba(102, 126, 234, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            animation: personaSlide 0.6s ease-out;
+        }
+        
+        @keyframes personaSlide {
+            from { 
+                opacity: 0; 
+                transform: translateY(20px);
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0);
+            }
+        }
+        
+        .persona-name {
+            color: #764ba2;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        /* Loading animation */
+        .typing-indicator {
+            display: inline-flex;
+            gap: 4px;
+            padding: 10px;
+        }
+        
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #667eea;
+            animation: typing 1.4s infinite;
+        }
+        
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.5;
+            }
+            30% {
+                transform: translateY(-10px);
+                opacity: 1;
+            }
+        }
+        
+        /* Progress bar */
+        .progress-bar {
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 2px;
+            width: 0%;
+            transition: width 0.5s ease;
+            animation: shimmer 1s linear infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { opacity: 0.8; }
+            50% { opacity: 1; }
+            100% { opacity: 0.8; }
+        }
+        
+        /* Keywords as tags */
+        .keyword-tag {
+            display: inline-block;
+            background: rgba(102, 126, 234, 0.2);
+            color: #a0a0ff;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            margin: 5px;
+            animation: tagPop 0.3s ease-out;
+        }
+        
+        @keyframes tagPop {
+            from { transform: scale(0); }
+            to { transform: scale(1); }
+        }
+        
+        /* Typewriter cursor */
+        .typing-cursor {
+            display: inline-block;
+            width: 2px;
+            height: 1.2em;
+            background: #667eea;
+            margin-left: 2px;
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+        
+        /* Message styles */
+        .message {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            animation: messageSlide 0.3s ease-out;
+        }
+        
+        @keyframes messageSlide {
+            from { 
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .message.system {
+            background: rgba(102, 126, 234, 0.1);
+            border-left: 3px solid #667eea;
+        }
+        
+        .message.error {
+            background: rgba(234, 102, 102, 0.1);
+            border-left: 3px solid #ea6666;
+            color: #ff9999;
+        }
+        
+        .message.success {
+            background: rgba(102, 234, 102, 0.1);
+            border-left: 3px solid #66ea66;
+            color: #99ff99;
+        }
+        
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .input-panel {
+                position: static;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Live Marketing Analysis</h1>
+            <p>Watch AI analyze your website in real-time with streaming insights</p>
+        </div>
+        
+        <div class="main-grid">
+            <div class="input-panel">
+                <h2 style="margin-bottom: 25px; color: #e0e0e0;">Input Details</h2>
+                
+                <form id="marketingForm">
+                    <div class="form-group">
+                        <label for="appName">App Name</label>
+                        <input 
+                            type="text" 
+                            id="appName" 
+                            placeholder="MyAwesomeApp"
+                            required
+                        >
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="appUrl">Website URL</label>
+                        <input 
+                            type="url" 
+                            id="appUrl" 
+                            placeholder="https://example.com"
+                            required
+                        >
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="competitorHint">Competitor (Optional)</label>
+                        <input 
+                            type="text" 
+                            id="competitorHint" 
+                            placeholder="Similar to..."
+                        >
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="maxPersonas">Target Personas</label>
+                        <select id="maxPersonas">
+                            <option value="1">1 Persona</option>
+                            <option value="2" selected>2 Personas</option>
+                            <option value="3">3 Personas</option>
+                        </select>
+                    </div>
+                    
+                    <div class="button-group">
+                        <button type="button" class="btn-stream" onclick="startStreaming()">
+                            🔴 Start Live Stream
+                        </button>
+                        <button type="button" class="btn-normal" onclick="normalAnalysis()">
+                            ⚡ Quick Analysis
+                        </button>
+                    </div>
+                </form>
+                
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+                    <button onclick="clearResults()" style="width: 100%; background: rgba(255,0,0,0.1); color: #ff6666;">
+                        Clear Results
+                    </button>
+                </div>
+            </div>
+            
+            <div class="stream-panel">
+                <div class="stream-header">
+                    <h2>Live Stream Output</h2>
+                    <div class="stream-status">
+                        <span class="status-dot" id="statusDot"></span>
+                        <span id="statusText">Ready</span>
+                    </div>
+                </div>
+                
+                <div class="progress-bar" id="progressBar" style="display: none;">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                
+                <div class="stream-content" id="streamContent">
+                    <div class="message system">
+                        👋 Welcome! Enter your website details and click "Start Live Stream" to watch the AI analyze your site in real-time.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const API_URL = 'http://localhost:8123';
+        let isStreaming = false;
+        let displayedContent = {}; // Track what's already been displayed
+        
+        async function startStreaming() {
+            if (isStreaming) return;
+            
+            const appName = document.getElementById('appName').value;
+            const appUrl = document.getElementById('appUrl').value;
+            const competitorHint = document.getElementById('competitorHint').value || null;
+            const maxPersonas = parseInt(document.getElementById('maxPersonas').value);
+            
+            if (!appName || !appUrl) {
+                alert('Please provide both App Name and Website URL');
+                return;
+            }
+            
+            isStreaming = true;
+            updateStatus('streaming');
+            clearStreamContent();
+            displayedContent = {}; // Reset tracking for new stream
+            showProgress();
+            
+            const streamContent = document.getElementById('streamContent');
+            
+            // Add initial message
+            addMessage('🚀 Initiating live analysis...', 'system');
+            
+            try {
+                const response = await fetch(`${API_URL}/marketing-agent/stream`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        state: {
+                            appName,
+                            appUrl,
+                            competitor_hint: competitorHint,
+                            max_personas: maxPersonas
+                        },
+                        thread_id: 'stream-' + Date.now()
+                    })
+                });
+                
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+                let currentSection = null;
+                let progressPercent = 0;
+                
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop() || '';
+                    
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            const data = line.slice(6);
+                            if (data === '[DONE]') {
+                                updateProgress(100);
+                                addMessage('✅ Analysis Complete!', 'success');
+                                updateStatus('completed');
+                                hideProgress();
+                            } else {
+                                try {
+                                    const parsed = JSON.parse(data);
+                                    progressPercent = Math.min(progressPercent + 10, 90);
+                                    updateProgress(progressPercent);
+                                    displayStreamUpdate(parsed);
+                                } catch (e) {
+                                    console.error('Parse error:', e);
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (error) {
+                addMessage(`❌ Error: ${error.message}`, 'error');
+                updateStatus('error');
+                hideProgress();
+            } finally {
+                isStreaming = false;
+            }
+        }
+        
+        // Typewriter effect for streaming text
+        async function typewriterEffect(element, text, speed = 10) {
+            element.innerHTML = '';
+            
+            // Add cursor
+            const cursor = document.createElement('span');
+            cursor.className = 'typing-cursor';
+            element.appendChild(cursor);
+            
+            // Type each character
+            for (let i = 0; i < text.length; i++) {
+                // Insert character before cursor
+                const char = text[i];
+                const textNode = document.createTextNode(char);
+                element.insertBefore(textNode, cursor);
+                
+                // Scroll to view
+                cursor.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                
+                // Wait before next character
+                await new Promise(resolve => setTimeout(resolve, speed));
+            }
+            
+            // Remove cursor after typing is complete
+            cursor.remove();
+        }
+        
+        // Process and display streaming updates with typewriter effect
+        async function displayStreamUpdate(data, showTyping = true, useTypewriter = true) {
+            const streamContent = document.getElementById('streamContent');
+            
+            // Remove typing indicator if exists
+            const typingIndicator = document.querySelector('.typing-indicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+            
+            // App Description
+            if (data.appDescription && !displayedContent.appDescription) {
+                displayedContent.appDescription = true;
+                const section = createSection('section-description', '📱', 'Application Overview', '');
+                streamContent.appendChild(section);
+                if (useTypewriter) {
+                    const content = section.querySelector('.section-content');
+                    await typewriterEffect(content, data.appDescription);
+                } else {
+                    section.querySelector('.section-content').innerHTML = data.appDescription;
+                }
+            }
+            
+            // Value Proposition
+            if (data.value_proposition && !displayedContent.value_proposition) {
+                displayedContent.value_proposition = true;
+                const section = createSection('section-value', '💡', 'Value Proposition', '');
+                streamContent.appendChild(section);
+                if (useTypewriter) {
+                    const content = section.querySelector('.section-content');
+                    await typewriterEffect(content, data.value_proposition);
+                } else {
+                    section.querySelector('.section-content').innerHTML = data.value_proposition;
+                }
+            }
+            
+            // Key Features
+            if (data.keyfeatures && data.keyfeatures.length > 0 && !displayedContent.keyfeatures) {
+                displayedContent.keyfeatures = true;
+                const section = createSection('section-features', '🎯', 'Key Features', '');
+                streamContent.appendChild(section);
+                const content = section.querySelector('.section-content');
+                
+                if (useTypewriter) {
+                    const ul = document.createElement('ul');
+                    content.appendChild(ul);
+                    for (let feature of data.keyfeatures) {
+                        const li = document.createElement('li');
+                        ul.appendChild(li);
+                        await typewriterEffect(li, feature);
+                    }
+                } else {
+                    content.innerHTML = '<ul>' + data.keyfeatures.map(f => `<li>${f}</li>`).join('') + '</ul>';
+                }
+            }
+            
+            // Personas with typewriter effect - handle incremental updates
+            if (data.personas && data.personas.length > 0) {
+                if (!displayedContent.personas) {
+                    displayedContent.personas = [];
+                }
+                
+                // Only process new personas
+                const newPersonas = data.personas.slice(displayedContent.personas.length);
+                
+                if (newPersonas.length > 0) {
+                    let personaSection = document.getElementById('section-personas');
+                    if (!personaSection) {
+                        personaSection = createSection('section-personas', '👥', 'Target Personas', '');
+                        streamContent.appendChild(personaSection);
+                    }
+                    
+                    const personaContent = personaSection.querySelector('.section-content');
+                    
+                    for (let persona of newPersonas) {
+                        displayedContent.personas.push(persona);
+                        
+                        if (useTypewriter) {
+                            const card = document.createElement('div');
+                            card.className = 'persona-card';
+                            
+                            const nameDiv = document.createElement('div');
+                            nameDiv.className = 'persona-name';
+                            nameDiv.textContent = persona.name;
+                            card.appendChild(nameDiv);
+                            
+                            const descDiv = document.createElement('div');
+                            card.appendChild(descDiv);
+                            personaContent.appendChild(card);
+                            
+                            await typewriterEffect(descDiv, persona.description);
+                        } else {
+                            const card = document.createElement('div');
+                            card.className = 'persona-card';
+                            card.innerHTML = `
+                                <div class="persona-name">${persona.name}</div>
+                                <div>${persona.description}</div>
+                            `;
+                            personaContent.appendChild(card);
+                        }
+                    }
+                }
+            }
+            
+            // Keywords with animated appearance
+            if (data.keywords && data.keywords.length > 0 && !displayedContent.keywords) {
+                displayedContent.keywords = true;
+                const section = createSection('section-keywords', '🔑', 'Target Keywords', '');
+                streamContent.appendChild(section);
+                const content = section.querySelector('.section-content');
+                
+                if (useTypewriter) {
+                    for (let keyword of data.keywords.slice(0, 10)) {
+                        const tag = document.createElement('span');
+                        tag.className = 'keyword-tag';
+                        tag.style.opacity = '0';
+                        tag.textContent = keyword;
+                        content.appendChild(tag);
+                        
+                        // Animate tag appearance
+                        await new Promise(resolve => setTimeout(resolve, 50));
+                        tag.style.transition = 'opacity 0.3s';
+                        tag.style.opacity = '1';
+                    }
+                } else {
+                    content.innerHTML = data.keywords.slice(0, 10).map(k => 
+                        `<span class="keyword-tag">${k}</span>`
+                    ).join('');
+                }
+            }
+            
+            // Marketing Suggestions with typewriter - handle incremental updates
+            if (data.marketing_suggestions && data.marketing_suggestions.length > 0) {
+                if (!displayedContent.marketing_suggestions) {
+                    displayedContent.marketing_suggestions = [];
+                }
+                
+                // Only process new suggestions
+                const newSuggestions = data.marketing_suggestions.slice(displayedContent.marketing_suggestions.length);
+                
+                if (newSuggestions.length > 0) {
+                    let suggestionSection = document.getElementById('section-suggestions');
+                    if (!suggestionSection) {
+                        suggestionSection = createSection('section-suggestions', '📈', 'Marketing Strategies', '');
+                        streamContent.appendChild(suggestionSection);
+                        
+                        const suggestionContent = suggestionSection.querySelector('.section-content');
+                        const ol = document.createElement('ol');
+                        ol.start = 1;
+                        suggestionContent.appendChild(ol);
+                    }
+                    
+                    const ol = suggestionSection.querySelector('ol');
+                    
+                    for (let suggestion of newSuggestions.slice(0, 5 - displayedContent.marketing_suggestions.length)) {
+                        displayedContent.marketing_suggestions.push(suggestion);
+                        
+                        if (useTypewriter) {
+                            const li = document.createElement('li');
+                            ol.appendChild(li);
+                            await typewriterEffect(li, suggestion, 5); // Faster for long text
+                        } else {
+                            const li = document.createElement('li');
+                            li.textContent = suggestion;
+                            ol.appendChild(li);
+                        }
+                    }
+                }
+            }
+            
+            // Add typing indicator for next update (only during streaming)
+            if (showTyping && !document.querySelector('.typing-indicator')) {
+                const typing = document.createElement('div');
+                typing.className = 'typing-indicator';
+                typing.innerHTML = '<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>';
+                streamContent.appendChild(typing);
+            }
+            
+            // Auto scroll
+            streamContent.scrollTop = streamContent.scrollHeight;
+        }
+        
+        function createSection(id, icon, title, content) {
+            const section = document.createElement('div');
+            section.id = id;
+            section.className = 'content-section';
+            section.innerHTML = `
+                <div class="section-title">
+                    <span class="section-icon">${icon}</span>
+                    ${title}
+                </div>
+                <div class="section-content">${content}</div>
+            `;
+            return section;
+        }
+        
+        async function normalAnalysis() {
+            const appName = document.getElementById('appName').value;
+            const appUrl = document.getElementById('appUrl').value;
+            const competitorHint = document.getElementById('competitorHint').value || null;
+            const maxPersonas = parseInt(document.getElementById('maxPersonas').value);
+            
+            if (!appName || !appUrl) {
+                alert('Please provide both App Name and Website URL');
+                return;
+            }
+            
+            updateStatus('processing');
+            clearStreamContent();
+            displayedContent = {}; // Reset tracking for new analysis
+            addMessage('⚡ Running quick analysis...', 'system');
+            
+            try {
+                const response = await fetch(`${API_URL}/marketing-agent/invoke`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        state: {
+                            appName,
+                            appUrl,
+                            competitor_hint: competitorHint,
+                            max_personas: maxPersonas
+                        },
+                        thread_id: 'normal-' + Date.now()
+                    })
+                });
+                
+                const data = await response.json();
+                // Pass false for typing indicator and typewriter for quick analysis
+                displayStreamUpdate(data, false, false);
+                
+                // Remove typing indicator after quick analysis (just in case)
+                const typingIndicator = document.querySelector('.typing-indicator');
+                if (typingIndicator) {
+                    typingIndicator.remove();
+                }
+                
+                addMessage('✅ Quick analysis complete!', 'success');
+                updateStatus('completed');
+                
+            } catch (error) {
+                // Remove typing indicator on error
+                const typingIndicator = document.querySelector('.typing-indicator');
+                if (typingIndicator) {
+                    typingIndicator.remove();
+                }
+                
+                addMessage(`❌ Error: ${error.message}`, 'error');
+                updateStatus('error');
+            }
+        }
+        
+        function addMessage(text, type = 'system') {
+            const streamContent = document.getElementById('streamContent');
+            const message = document.createElement('div');
+            message.className = `message ${type}`;
+            message.innerHTML = text;
+            streamContent.appendChild(message);
+            streamContent.scrollTop = streamContent.scrollHeight;
+        }
+        
+        function clearStreamContent() {
+            document.getElementById('streamContent').innerHTML = '';
+        }
+        
+        function clearResults() {
+            clearStreamContent();
+            displayedContent = {}; // Reset tracking
+            addMessage('👋 Ready for a new analysis!', 'system');
+            updateStatus('ready');
+            hideProgress();
+        }
+        
+        function updateStatus(status) {
+            const statusDot = document.getElementById('statusDot');
+            const statusText = document.getElementById('statusText');
+            
+            switch(status) {
+                case 'streaming':
+                    statusDot.className = 'status-dot active';
+                    statusText.textContent = 'Live Streaming';
+                    break;
+                case 'processing':
+                    statusDot.className = 'status-dot active';
+                    statusText.textContent = 'Processing';
+                    break;
+                case 'completed':
+                    statusDot.className = 'status-dot';
+                    statusText.textContent = 'Completed';
+                    break;
+                case 'error':
+                    statusDot.className = 'status-dot';
+                    statusDot.style.background = '#ff6666';
+                    statusText.textContent = 'Error';
+                    break;
+                default:
+                    statusDot.className = 'status-dot';
+                    statusText.textContent = 'Ready';
+            }
+        }
+        
+        function showProgress() {
+            document.getElementById('progressBar').style.display = 'block';
+            updateProgress(0);
+        }
+        
+        function hideProgress() {
+            setTimeout(() => {
+                document.getElementById('progressBar').style.display = 'none';
+            }, 500);
+        }
+        
+        function updateProgress(percent) {
+            document.getElementById('progressFill').style.width = percent + '%';
+        }
+    </script>
+</body>
+</html>
