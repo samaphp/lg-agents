@@ -6,6 +6,7 @@
 - Modified Groq LLM to use lazy loading for better performance
 - Added poetry.lock for reproducible dependency management
 - Configured to work with OpenAI API only for testing
+- Add CORS middleware for cross-origin requests
 
 ## Installation Steps
 

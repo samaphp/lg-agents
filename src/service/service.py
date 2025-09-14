@@ -20,6 +20,7 @@ from concurrent.futures import ThreadPoolExecutor
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, status
 from fastapi.responses import StreamingResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi.middleware.cors import CORSMiddleware
 from langchain_core._api import LangChainBetaWarning
 from langchain_core.messages import AnyMessage, HumanMessage
 from langchain_core.runnables import RunnableConfig
@@ -78,6 +79,16 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 
 app = FastAPI(lifespan=lifespan)
+
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://localhost:3001", "*"],  # Allow the chat UI
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 router = APIRouter(dependencies=[Depends(verify_bearer)])
 
 
