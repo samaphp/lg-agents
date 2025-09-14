@@ -38,6 +38,8 @@
 
 1. Set your OpenAI key `OPENAI_API_KEY=YOUR_KEY` in `.env` file
 
+1. OPTIONAL: Set your `TAVILY_API_KEY` since it is used by the Web function tool.
+
 1. Run the service:
    ```bash
    uv run src/run_service.py
