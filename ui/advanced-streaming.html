@@ -703,51 +703,36 @@
                 }
             }
             
-            // Personas with typewriter effect - handle incremental updates
-            if (data.personas && data.personas.length > 0) {
-                if (!displayedContent.personas) {
-                    displayedContent.personas = [];
-                }
+            // Personas with typewriter effect - display once when complete
+            if (data.personas && data.personas.length > 0 && !displayedContent.personas) {
+                displayedContent.personas = true;
+                const personaSection = createSection('section-personas', '👥', 'Target Personas', '');
+                streamContent.appendChild(personaSection);
+                const personaContent = personaSection.querySelector('.section-content');
                 
-                // Only process new personas
-                const newPersonas = data.personas.slice(displayedContent.personas.length);
-                
-                if (newPersonas.length > 0) {
-                    let personaSection = document.getElementById('section-personas');
-                    if (!personaSection) {
-                        personaSection = createSection('section-personas', '👥', 'Target Personas', '');
-                        streamContent.appendChild(personaSection);
-                    }
-                    
-                    const personaContent = personaSection.querySelector('.section-content');
-                    
-                    for (let persona of newPersonas) {
-                        displayedContent.personas.push(persona);
+                if (useTypewriter) {
+                    for (let persona of data.personas) {
+                        const card = document.createElement('div');
+                        card.className = 'persona-card';
                         
-                        if (useTypewriter) {
-                            const card = document.createElement('div');
-                            card.className = 'persona-card';
-                            
-                            const nameDiv = document.createElement('div');
-                            nameDiv.className = 'persona-name';
-                            nameDiv.textContent = persona.name;
-                            card.appendChild(nameDiv);
-                            
-                            const descDiv = document.createElement('div');
-                            card.appendChild(descDiv);
-                            personaContent.appendChild(card);
-                            
-                            await typewriterEffect(descDiv, persona.description);
-                        } else {
-                            const card = document.createElement('div');
-                            card.className = 'persona-card';
-                            card.innerHTML = `
-                                <div class="persona-name">${persona.name}</div>
-                                <div>${persona.description}</div>
-                            `;
-                            personaContent.appendChild(card);
-                        }
+                        const nameDiv = document.createElement('div');
+                        nameDiv.className = 'persona-name';
+                        nameDiv.textContent = persona.name;
+                        card.appendChild(nameDiv);
+                        
+                        const descDiv = document.createElement('div');
+                        card.appendChild(descDiv);
+                        personaContent.appendChild(card);
+                        
+                        await typewriterEffect(descDiv, persona.description);
                     }
+                } else {
+                    personaContent.innerHTML = data.personas.map(p => `
+                        <div class="persona-card">
+                            <div class="persona-name">${p.name}</div>
+                            <div>${p.description}</div>
+                        </div>
+                    `).join('');
                 }
             }
             
