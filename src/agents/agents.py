@@ -6,7 +6,7 @@ from langgraph.graph.state import CompiledStateGraph
 from agents.college_finder_agent.team_roster_agent import team_roster_agent
 from agents.college_finder_agent.college_agent import college_finder_agent
 from agents.marketing_agent.marketing_agent import marketing_agent
-from agents.privateagents.private.bargpt_agent.bargpt_trending_flow import BarGPTTrendingPostFlow
+# from agents.privateagents.private.bargpt_agent.bargpt_trending_flow import BarGPTTrendingPostFlow
 from api_schema import AgentInfo
 from core.crew_agent import CrewAgent
 from crew_agents.vacation_house_agent.vacation_house_agent import VacationHouseAgent
@@ -24,8 +24,8 @@ class Agent:
 def get_vacation_house_agent():
     return VacationHouseAgent()
 
-def get_bargpt_trending_agent():
-    return BarGPTTrendingPostFlow()
+# def get_bargpt_trending_agent():
+#     return BarGPTTrendingPostFlow()
 
 
 all_agents: dict[str, Agent] = {
@@ -35,7 +35,7 @@ all_agents: dict[str, Agent] = {
    "team-roster-agent": Agent(description="A team roster agent.", graph=team_roster_agent, type="LANGGRAPH"),
    "vacation-house-agent": Agent(description="An agent to help find vacation houses.", graph=get_vacation_house_agent(), type="CREW"),
    ## Private Agents comment out when not in use
-   "bargpt-trending-agent": Agent(description="An agent to help find trending topics.", graph=get_bargpt_trending_agent(), type="CREW"),
+   # "bargpt-trending-agent": Agent(description="An agent to help find trending topics.", graph=get_bargpt_trending_agent(), type="CREW"),
 }
 
 
