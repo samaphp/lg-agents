@@ -23,7 +23,7 @@
    cd lg-agents
    ```
 
-2. Install dependencies using one of these methods:
+1. Install dependencies using one of these methods:
    ```bash
    # Using pip
    pip install -r requirements.txt
@@ -32,7 +32,13 @@
    poetry install
    ```
 
-3. Run the service:
+1. Copy `.env` file `cp .env.example .env`
+
+1. Set port `PORT=8123` in `.env` file
+
+1. Set your OpenAI key `OPENAI_API_KEY=YOUR_KEY` in `.env` file
+
+1. Run the service:
    ```bash
    uv run src/run_service.py
    ```
