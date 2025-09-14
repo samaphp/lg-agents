@@ -1,3 +1,43 @@
+# Fork Modifications
+
+## Changes from Original
+
+- Disabled BarGPT private agent to remove private dependencies
+- Modified Groq LLM to use lazy loading for better performance
+- Added poetry.lock for reproducible dependency management
+- Configured to work with OpenAI API only for testing
+
+## Installation Steps
+
+### Prerequisites
+- Python 3.8+
+- OpenAI API key (set as `OPENAI_API_KEY` environment variable)
+
+### Setup
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/samaphp/lg-agents.git
+   cd lg-agents
+   ```
+
+2. Install dependencies using one of these methods:
+   ```bash
+   # Using pip
+   pip install -r requirements.txt
+   
+   # OR using Poetry
+   poetry install
+   ```
+
+3. Run the service:
+   ```bash
+   uv run src/run_service.py
+   ```
+   > **Note:** If you encounter timeout errors, retry the command several times as the initial setup may require multiple attempts to bypass the default 30-second timeout.
+
+---
+
 # Sample AI Agent using LangGraph and CrewAI
 
 This work is originallybased on [this repo](https://github.com/JoshuaC215/agent-service-toolkit) which was created by [JoshuaC215](https://github.com/JoshuaC215).  Thanks! 
