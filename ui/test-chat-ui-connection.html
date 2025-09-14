@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Agent Connection</title>
+</head>
+<body>
+    <h1>Test Connection to LangGraph Agents</h1>
+    <button onclick="testConnection()">Test API Connection</button>
+    <button onclick="testStream()">Test Streaming</button>
+    <div id="result"></div>
+    
+    <script>
+        const API_URL = 'http://localhost:8123';
+        
+        async function testConnection() {
+            const resultDiv = document.getElementById('result');
+            try {
+                // Test health endpoint
+                const healthResponse = await fetch(`${API_URL}/health`);
+                const healthData = await healthResponse.json();
+                
+                // Test info endpoint
+                const infoResponse = await fetch(`${API_URL}/info`);
+                const infoData = await infoResponse.json();
+                
+                resultDiv.innerHTML = `
+                    <h3>Connection Successful!</h3>
+                    <p>Health: ${JSON.stringify(healthData)}</p>
+                    <p>Available Agents: ${infoData.agents.map(a => a.key).join(', ')}</p>
+                    <p>Default Model: ${infoData.default_model}</p>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+        
+        async function testStream() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<h3>Streaming...</h3>';
+            
+            try {
+                const response = await fetch(`${API_URL}/marketing-agent/stream`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        state: {
+                            appName: "TestApp",
+                            appUrl: "https://example.com",
+                            max_personas: 1,
+                            competitor_hint: null
+                        },
+                        thread_id: "test-ui-" + Date.now()
+                    })
+                });
+                
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+                
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop() || '';
+                    
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            const data = line.slice(6);
+                            if (data === '[DONE]') {
+                                resultDiv.innerHTML += '<p><b>Stream Complete!</b></p>';
+                            } else {
+                                try {
+                                    const parsed = JSON.parse(data);
+                                    resultDiv.innerHTML += `<p>Received update: ${Object.keys(parsed).length} fields</p>`;
+                                } catch (e) {
+                                    // Skip parse errors
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p style="color: red;">Stream Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

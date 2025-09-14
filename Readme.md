@@ -7,6 +7,7 @@
 - Added poetry.lock for reproducible dependency management
 - Configured to work with OpenAI API only for testing
 - Add CORS middleware for cross-origin requests
+- Add simple UI to be connected with agents
 
 ## Installation Steps
 

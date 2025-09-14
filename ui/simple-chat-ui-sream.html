@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Chat Interface</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            width: 90%;
+            max-width: 800px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .agent-selector {
+            padding: 20px;
+            background: #f7f7f7;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .agent-selector select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        .chat-area {
+            height: 400px;
+            overflow-y: auto;
+            padding: 20px;
+            background: #fafafa;
+        }
+        .message {
+            margin: 10px 0;
+            padding: 12px 16px;
+            border-radius: 12px;
+            max-width: 70%;
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .user-message {
+            background: #667eea;
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+        .agent-message {
+            background: white;
+            border: 1px solid #e0e0e0;
+        }
+        .input-area {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .input-group input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        button {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: scale(1.05);
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .status {
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 LangGraph Agent Chat</h1>
+            <p>Chat with your AI agents locally</p>
+        </div>
+        
+        <div class="agent-selector">
+            <label for="agent">Select Agent:</label>
+            <select id="agent">
+                <option value="marketing-agent" selected>Marketing Agent (Recommended)</option>
+                <option value="college-agent" disabled>College Finder Agent (Different inputs needed)</option>
+                <option value="team-roster-agent" disabled>Team Roster Agent (Different inputs needed)</option>
+                <option value="vacation-house-agent" disabled>Vacation House Agent (Different inputs needed)</option>
+            </select>
+            <p style="margin-top: 10px; font-size: 14px; color: #666;">
+                ℹ️ Currently optimized for Marketing Agent only. Other agents require different input parameters.
+            </p>
+        </div>
+        
+        <div class="chat-area" id="chatArea">
+            <div class="message agent-message">
+                👋 Welcome to the Marketing Agent! I can analyze your website and provide:<br>
+                • Value proposition analysis<br>
+                • Target persona identification<br>
+                • Marketing strategy recommendations<br><br>
+                Please enter your app details below to get started!
+            </div>
+        </div>
+        
+        <div class="input-area">
+            <div id="marketingInputs">
+                <div class="input-group">
+                    <input type="text" id="appName" placeholder="App Name (e.g., MyApp)">
+                    <input type="text" id="appUrl" placeholder="App URL (e.g., https://example.com)">
+                </div>
+                <div class="input-group">
+                    <input type="text" id="competitorHint" placeholder="Competitor hint (optional)">
+                    <input type="number" id="maxPersonas" placeholder="Max personas" value="2" min="1" max="5">
+                </div>
+            </div>
+            <button onclick="sendRequest()" id="sendBtn">Send Request</button>
+            <button onclick="streamRequest()" id="streamBtn">Stream Request</button>
+            <div class="status" id="status" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8123';
+        let threadId = 'thread-' + Date.now();
+        
+        function addMessage(content, isUser = false) {
+            const chatArea = document.getElementById('chatArea');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'agent-message'}`;
+            messageDiv.innerHTML = content;
+            chatArea.appendChild(messageDiv);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+        
+        function showStatus(message, isLoading = false) {
+            const status = document.getElementById('status');
+            status.style.display = 'block';
+            status.innerHTML = message + (isLoading ? '<span class="loading"></span>' : '');
+        }
+        
+        function hideStatus() {
+            document.getElementById('status').style.display = 'none';
+        }
+        
+        async function sendRequest() {
+            const agent = document.getElementById('agent').value;
+            const appName = document.getElementById('appName').value;
+            const appUrl = document.getElementById('appUrl').value;
+            const competitorHint = document.getElementById('competitorHint').value || null;
+            const maxPersonas = parseInt(document.getElementById('maxPersonas').value) || 2;
+            
+            if (!appName || !appUrl) {
+                alert('Please provide both App Name and App URL');
+                return;
+            }
+            
+            addMessage(`Analyzing ${appName} at ${appUrl}...`, true);
+            showStatus('Processing request...', true);
+            
+            document.getElementById('sendBtn').disabled = true;
+            document.getElementById('streamBtn').disabled = true;
+            
+            try {
+                const response = await fetch(`${API_URL}/${agent}/invoke`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        state: {
+                            appName,
+                            appUrl,
+                            competitor_hint: competitorHint,
+                            max_personas: maxPersonas
+                        },
+                        thread_id: threadId
+                    })
+                });
+                
+                const data = await response.json();
+                
+                let resultHtml = '<strong>Analysis Complete!</strong><br><br>';
+                
+                if (data.value_proposition) {
+                    resultHtml += `<strong>Value Proposition:</strong> ${data.value_proposition}<br><br>`;
+                }
+                
+                if (data.personas && data.personas.length > 0) {
+                    resultHtml += '<strong>Target Personas:</strong><ul>';
+                    data.personas.forEach(p => {
+                        resultHtml += `<li><strong>${p.name}:</strong> ${p.description}</li>`;
+                    });
+                    resultHtml += '</ul>';
+                }
+                
+                if (data.marketing_suggestions && data.marketing_suggestions.length > 0) {
+                    resultHtml += '<strong>Marketing Suggestions:</strong><ol>';
+                    data.marketing_suggestions.slice(0, 3).forEach(s => {
+                        resultHtml += `<li>${s}</li>`;
+                    });
+                    resultHtml += '</ol>';
+                }
+                
+                addMessage(resultHtml);
+                hideStatus();
+            } catch (error) {
+                addMessage(`Error: ${error.message}`, false);
+                hideStatus();
+            } finally {
+                document.getElementById('sendBtn').disabled = false;
+                document.getElementById('streamBtn').disabled = false;
+            }
+        }
+        
+        async function streamRequest() {
+            const agent = document.getElementById('agent').value;
+            const appName = document.getElementById('appName').value;
+            const appUrl = document.getElementById('appUrl').value;
+            const competitorHint = document.getElementById('competitorHint').value || null;
+            const maxPersonas = parseInt(document.getElementById('maxPersonas').value) || 2;
+            
+            if (!appName || !appUrl) {
+                alert('Please provide both App Name and App URL');
+                return;
+            }
+            
+            addMessage(`Starting streaming analysis of ${appName}...`, true);
+            
+            // Create a streaming message container
+            const chatArea = document.getElementById('chatArea');
+            const streamDiv = document.createElement('div');
+            streamDiv.className = 'message agent-message';
+            streamDiv.innerHTML = '<strong>🔄 Processing...</strong><br><br>';
+            chatArea.appendChild(streamDiv);
+            chatArea.scrollTop = chatArea.scrollHeight;
+            
+            showStatus('Streaming live updates...', true);
+            
+            document.getElementById('sendBtn').disabled = true;
+            document.getElementById('streamBtn').disabled = true;
+            
+            let lastState = {};
+            
+            try {
+                const response = await fetch(`${API_URL}/${agent}/stream`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        state: {
+                            appName,
+                            appUrl,
+                            competitor_hint: competitorHint,
+                            max_personas: maxPersonas
+                        },
+                        thread_id: threadId + '-stream'
+                    })
+                });
+                
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+                
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop() || '';
+                    
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            const data = line.slice(6);
+                            if (data === '[DONE]') {
+                                streamDiv.innerHTML += '<br><strong>✅ Analysis Complete!</strong>';
+                                hideStatus();
+                            } else {
+                                try {
+                                    const parsed = JSON.parse(data);
+                                    lastState = parsed;
+                                    
+                                    // Build the live update display
+                                    let html = '<strong>🔄 Live Analysis Update:</strong><br><br>';
+                                    
+                                    if (parsed.appDescription) {
+                                        html += `<strong>📱 App:</strong> ${parsed.appDescription}<br><br>`;
+                                    }
+                                    
+                                    if (parsed.value_proposition) {
+                                        html += `<strong>💡 Value Proposition:</strong> ${parsed.value_proposition}<br><br>`;
+                                    }
+                                    
+                                    if (parsed.keyfeatures && parsed.keyfeatures.length > 0) {
+                                        html += '<strong>🎯 Key Features:</strong><ul>';
+                                        parsed.keyfeatures.forEach(f => {
+                                            html += `<li>${f}</li>`;
+                                        });
+                                        html += '</ul>';
+                                    }
+                                    
+                                    if (parsed.personas && parsed.personas.length > 0) {
+                                        html += '<strong>👥 Target Personas:</strong><br>';
+                                        parsed.personas.forEach(p => {
+                                            html += `<div style="margin: 10px 0; padding: 10px; background: #f0f0f0; border-radius: 8px;">`;
+                                            html += `<strong>${p.name}:</strong><br>${p.description}</div>`;
+                                        });
+                                    }
+                                    
+                                    if (parsed.keywords && parsed.keywords.length > 0) {
+                                        html += '<strong>🔑 Keywords:</strong> ' + parsed.keywords.slice(0, 5).join(', ') + '<br><br>';
+                                    }
+                                    
+                                    if (parsed.marketing_suggestions && parsed.marketing_suggestions.length > 0) {
+                                        html += '<strong>📈 Marketing Suggestions:</strong><ol>';
+                                        parsed.marketing_suggestions.slice(0, 3).forEach(s => {
+                                            html += `<li>${s}</li>`;
+                                        });
+                                        html += '</ol>';
+                                    }
+                                    
+                                    streamDiv.innerHTML = html;
+                                    chatArea.scrollTop = chatArea.scrollHeight;
+                                    
+                                } catch (e) {
+                                    console.error('Parse error:', e);
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (error) {
+                addMessage(`Stream Error: ${error.message}`, false);
+                hideStatus();
+            } finally {
+                document.getElementById('sendBtn').disabled = false;
+                document.getElementById('streamBtn').disabled = false;
+            }
+        }
+        
+        // Handle agent selection changes
+        document.getElementById('agent').addEventListener('change', function() {
+            const agent = this.value;
+            if (agent === 'marketing-agent') {
+                addMessage('Marketing Agent selected. Please provide app details for analysis.');
+            } else {
+                addMessage(`${agent} selected. Note: This UI is optimized for the marketing agent.`);
+            }
+        });
+    </script>
+</body>
+</html>
